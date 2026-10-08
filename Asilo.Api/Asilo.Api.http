@@ -1,0 +1,6 @@
+@Asilo.Api_HostAddress = http://localhost:5177
+
+GET {{Asilo.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

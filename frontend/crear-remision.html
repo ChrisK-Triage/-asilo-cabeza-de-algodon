@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Remisiones · Asilo Cabeza de Algodón</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/prototipo.css">
+<link rel="stylesheet" href="css/extra.css">
+</head>
+<body>
+<header><div class="barra">
+  <div class="marca">Asilo Cabeza de Algodón<span>Sistema de administración</span></div>
+  <div class="usuario"><strong>Dr. Luis Arévalo</strong>Médico general</div>
+</div></header>
+<div class="cuerpo">
+<aside>
+  <div class="grupo-nav">Módulo clínico</div>
+  <a href="panel-clinico.html">Residentes</a>
+  <a href="crear-remision.html">Remisiones</a>
+  <div class="grupo-nav">Sesión</div>
+  <a href="login.html">Cerrar sesión</a>
+</aside>
+<main>
+  <div class="titulo-pagina">
+    <h1>Remisiones a especialista</h1>
+    <span class="conteo" id="conteo"></span>
+  </div>
+
+  <div class="aviso" id="aviso"></div>
+
+  <div class="panel">
+    <div class="panel-cuerpo">
+      <h2>Crear remisión</h2>
+      <form id="form-remision">
+        <div class="rejilla">
+          <div class="campo">
+            <label for="residenteId">Residente</label>
+            <select id="residenteId" name="residenteId" required></select>
+            <span class="ayuda">Catálogo alimentado desde la base de datos</span>
+          </div>
+          <div class="campo">
+            <label for="especialidadSolicitada">Especialidad requerida</label>
+            <select id="especialidadSolicitada" name="especialidadSolicitada" required>
+              <option value="">Selecciona una especialidad</option>
+              <option>Neurología</option>
+              <option>Cardiología</option>
+              <option>Traumatología</option>
+              <option>Oftalmología</option>
+              <option>Medicina interna</option>
+              <option>Geriatría</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="enfermeroAsignado">Enfermero responsable del traslado</label>
+            <input id="enfermeroAsignado" name="enfermeroAsignado" maxlength="100" placeholder="Karla Jiménez">
+          </div>
+        </div>
+        <div class="campo" style="margin-top:14px">
+          <label for="sintomatologia">Sintomatología observada</label>
+          <textarea id="sintomatologia" name="sintomatologia" required
+            placeholder="Desorientación nocturna progresiva durante las últimas tres semanas."></textarea>
+          <span class="ayuda">Esta descripción la leerá el especialista antes de la consulta</span>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="btn-principal">Emitir solicitud</button>
+          <button type="reset" class="btn-secundario">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-cuerpo" style="padding-bottom:0">
+      <div class="campo" style="max-width:260px">
+        <label for="filtro-estado">Filtrar por estado</label>
+        <select id="filtro-estado">
+          <option value="">Todas</option>
+          <option value="Pendiente">Pendientes</option>
+          <option value="Programada">Programadas</option>
+          <option value="Cancelada">Canceladas</option>
+        </select>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Residente</th><th>Especialidad y motivo</th>
+          <th>Solicitada</th><th>Estado</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="cuerpo-tabla"></tbody>
+    </table>
+  </div>
+</main>
+</div>
+<script src="js/api.js"></script>
+<script src="js/remisiones.js"></script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Consola de fundación · Asilo Cabeza de Algodón</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/prototipo.css">
+</head>
+<body>
+<div class="cinta">Prototipo de interfaz — Fase de diseño — Christopher Robles, carné 3090-23-13774</div>
+<header><div class="barra">
+  <div class="marca">Asilo Cabeza de Algodón<span>Sistema de administración</span></div>
+  <div class="usuario"><strong>Lic. Andrea Solís</strong>Coordinadora — Fundación</div>
+</div></header>
+<div class="cuerpo">
+<aside>
+  <div class="grupo-nav">Fundación</div>
+  <a href="consola-fundacion.html" class="activo">Remisiones pendientes</a>
+  <a href="#">Agenda de citas</a>
+  <a href="#">Especialistas</a>
+  <div class="grupo-nav">Clínico</div>
+  <a href="#">Bitácoras de consulta</a>
+  <a href="login.html">Cerrar sesión</a>
+</aside>
+<main>
+  <h1>Remisiones pendientes</h1>
+  <p class="subtitulo">4 solicitudes esperan asignación de especialista y horario</p>
+
+  <div class="panel">
+    <table>
+      <thead><tr><th>Residente y motivo</th><th>Especialidad</th><th>Solicitada</th><th>Prioridad</th><th></th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Rosa Elena Méndez<div class="secundario">Desorientación nocturna progresiva</div></td>
+          <td>Neurología</td>
+          <td>22/09/2026<div class="antiguedad">Hace 3 días</div></td>
+          <td><span class="estado e-pendiente">Preferente</span></td>
+          <td class="der"><a class="btn-fila" href="asignar-cita.html">Asignar</a></td>
+        </tr>
+        <tr>
+          <td>Julio César Ramírez<div class="secundario">Control de presión no estabilizado</div></td>
+          <td>Cardiología</td>
+          <td>24/09/2026<div class="secundario">Hace 1 día</div></td>
+          <td><span class="estado e-pendiente">Ordinaria</span></td>
+          <td class="der"><a class="btn-fila" href="asignar-cita.html">Asignar</a></td>
+        </tr>
+        <tr>
+          <td>Fernando Aguilar<div class="secundario">Dolor lumbar tras caída</div></td>
+          <td>Traumatología</td>
+          <td>17/09/2026<div class="antiguedad">Hace 8 días</div></td>
+          <td><span class="estado e-cancelado">Urgente</span></td>
+          <td class="der"><a class="btn-fila" href="asignar-cita.html">Asignar</a></td>
+        </tr>
+        <tr>
+          <td>Marta Lucía Ortiz<div class="secundario">Revisión de agudeza visual</div></td>
+          <td>Oftalmología</td>
+          <td>25/09/2026<div class="secundario">Hoy</div></td>
+          <td><span class="estado e-pendiente">Ordinaria</span></td>
+          <td class="der"><a class="btn-fila" href="asignar-cita.html">Asignar</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+</div>
+</body></html>

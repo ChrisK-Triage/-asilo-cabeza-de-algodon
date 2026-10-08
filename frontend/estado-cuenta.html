@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estado de cuenta · Asilo Cabeza de Algodón</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/prototipo.css">
+</head>
+<body>
+<div class="cinta">Prototipo de interfaz — Fase de diseño — Christopher Robles, carné 3090-23-13774</div>
+<header><div class="barra">
+  <div class="marca">Asilo Cabeza de Algodón<span>Sistema de administración</span></div>
+  <div class="usuario"><strong>Licda. Mónica Herrera</strong>Administradora del asilo</div>
+</div></header>
+<div class="cuerpo">
+<aside>
+  <div class="grupo-nav">Finanzas</div>
+  <a href="estado-cuenta.html" class="activo">Estados de cuenta</a>
+  <a href="#">Donaciones</a>
+  <a href="#">Gastos operativos</a>
+  <a href="#">Pagos a la fundación</a>
+  <div class="grupo-nav">Informes</div>
+  <a href="#">Reportes</a>
+  <a href="login.html">Cerrar sesión</a>
+</aside>
+<main>
+  <h1>Estado de cuenta</h1>
+  <p class="subtitulo">Rosa Elena Méndez · Período septiembre 2026 · Familiar responsable: Ana Méndez</p>
+
+  <div class="panel">
+    <div class="panel-titulo">Cargos del período</div>
+    <table>
+      <thead><tr><th>Concepto</th><th>Fecha</th><th>Origen</th><th class="num">Monto bruto</th></tr></thead>
+      <tbody>
+        <tr><td>Cuota mensual de estancia</td><td>01/09/2026</td><td>Asilo</td><td class="num">Q 1,200.00</td></tr>
+        <tr><td>Consulta de neurología</td><td>18/09/2026</td><td>Fundación</td><td class="num">Q 350.00</td></tr>
+        <tr><td>Hemograma completo</td><td>19/09/2026</td><td>Laboratorio</td><td class="num">Q 185.00</td></tr>
+        <tr><td>Donepezilo 10 mg × 30</td><td>19/09/2026</td><td>Farmacia</td><td class="num">Q 240.00</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <div class="panel-titulo">Liquidación</div>
+    <div class="panel-cuerpo">
+      <div class="desglose">
+        <div class="renglon"><span>Total bruto</span><span class="num">Q 1,975.00</span></div>
+        <div class="renglon"><span class="descuento">Convenio de la fundación (20 % sobre servicios clínicos)</span><span class="num descuento">− Q 155.00</span></div>
+        <div class="renglon total"><span>Total neto a pagar</span><span class="num">Q 1,820.00</span></div>
+      </div>
+
+      <div class="rejilla" style="margin-top:22px;max-width:520px">
+        <div class="campo"><label for="mon">Monto recibido (Q)</label><input id="mon" type="number" value="1820.00" step="0.01"></div>
+        <div class="campo"><label for="met">Método de pago</label><select id="met"><option selected>Transferencia bancaria</option><option>Efectivo</option><option>Cheque</option></select></div>
+      </div>
+
+      <div class="acciones">
+        <button class="btn-principal">Registrar pago y liquidar</button>
+        <button class="btn-secundario">Generar recibo en PDF</button>
+      </div>
+      <p class="ayuda" style="margin-top:12px">Si el monto recibido es menor al total neto, la cuenta quedará en estado "Saldo pendiente" y se registrará el abono parcial.</p>
+    </div>
+  </div>
+</main>
+</div>
+</body></html>

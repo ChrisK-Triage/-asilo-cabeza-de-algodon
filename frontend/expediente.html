@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Expediente · Asilo Cabeza de Algodón</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/prototipo.css">
+</head>
+<body>
+<div class="cinta">Prototipo de interfaz — Fase de diseño — Christopher Robles, carné 3090-23-13774</div>
+<header><div class="barra">
+  <div class="marca">Asilo Cabeza de Algodón<span>Sistema de administración</span></div>
+  <div class="usuario"><strong>Dr. Luis Arévalo</strong>Médico general</div>
+</div></header>
+<div class="cuerpo">
+<aside>
+  <div class="grupo-nav">Módulo clínico</div>
+  <a href="panel-clinico.html">Residentes</a>
+  <a href="expediente.html" class="activo">Expedientes</a>
+  <a href="crear-remision.html">Remisiones</a>
+  <div class="grupo-nav">Consulta</div>
+  <a href="#">Historial clínico</a>
+  <a href="login.html">Cerrar sesión</a>
+</aside>
+<main>
+  <h1>Rosa Elena Méndez</h1>
+  <p class="subtitulo">81 años · Pabellón A · Ingresó el 12 de marzo de 2023</p>
+
+  <div class="panel">
+    <div class="panel-titulo">Ficha clínica</div>
+    <div class="panel-cuerpo">
+      <div class="ficha">
+        <div class="dato"><div class="rotulo">Psicopatologías</div><div class="valor">Demencia senil leve</div></div>
+        <div class="dato"><div class="rotulo">Alergias</div><div class="valor">Penicilina</div></div>
+        <div class="dato"><div class="rotulo">Familiar responsable</div><div class="valor">Ana Méndez<div class="secundario">ana.mendez@correo.com</div></div></div>
+        <div class="dato"><div class="rotulo">Cuota mensual</div><div class="valor">Q 1,200.00</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-titulo">Medicamentos de cajón</div>
+    <table>
+      <thead><tr><th>Medicamento</th><th>Dosis</th><th>Frecuencia</th><th>Desde</th></tr></thead>
+      <tbody>
+        <tr><td>Donepezilo 10 mg</td><td>1 tableta</td><td>Cada 24 horas</td><td>15/03/2023</td></tr>
+        <tr><td>Losartán 50 mg</td><td>1 tableta</td><td>Cada 12 horas</td><td>04/08/2024</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <div class="panel-titulo">Historial de visitas médicas</div>
+    <table>
+      <thead><tr><th>Fecha</th><th>Especialidad y motivo</th><th>Médico tratante</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td>18/09/2026</td><td>Neurología<div class="secundario">Desorientación nocturna progresiva</div></td><td>Dra. Silvia Paz</td><td><span class="estado e-proceso">En evaluación</span></td></tr>
+        <tr><td>04/06/2026</td><td>Cardiología<div class="secundario">Control de presión arterial</div></td><td>Dr. Mario Coronado</td><td><span class="estado e-completo">Completado</span></td></tr>
+        <tr><td>21/01/2026</td><td>Medicina interna<div class="secundario">Chequeo general semestral</div></td><td>Dr. Mario Coronado</td><td><span class="estado e-completo">Completado</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="acciones">
+    <a class="btn btn-principal" href="crear-remision.html">Crear remisión a especialista</a>
+    <a class="btn btn-secundario" href="#">Generar historial en PDF</a>
+  </div>
+</main>
+</div>
+</body></html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asignar cita · Asilo Cabeza de Algodón</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/prototipo.css">
+</head>
+<body>
+<div class="cinta">Prototipo de interfaz — Fase de diseño — Christopher Robles, carné 3090-23-13774</div>
+<header><div class="barra">
+  <div class="marca">Asilo Cabeza de Algodón<span>Sistema de administración</span></div>
+  <div class="usuario"><strong>Lic. Andrea Solís</strong>Coordinadora — Fundación</div>
+</div></header>
+<div class="cuerpo">
+<aside>
+  <div class="grupo-nav">Fundación</div>
+  <a href="consola-fundacion.html" class="activo">Remisiones pendientes</a>
+  <a href="#">Agenda de citas</a>
+  <a href="#">Especialistas</a>
+  <div class="grupo-nav">Clínico</div>
+  <a href="#">Bitácoras de consulta</a>
+  <a href="login.html">Cerrar sesión</a>
+</aside>
+<main>
+  <h1>Asignar especialista y horario</h1>
+  <p class="subtitulo">Remisión REM-2026-0184 · Solicitada hace 3 días</p>
+
+  <div class="panel">
+    <div class="panel-titulo">Datos de la solicitud</div>
+    <div class="panel-cuerpo">
+      <div class="ficha">
+        <div class="dato"><div class="rotulo">Residente</div><div class="valor">Rosa Elena Méndez, 81 años</div></div>
+        <div class="dato"><div class="rotulo">Especialidad solicitada</div><div class="valor">Neurología</div></div>
+        <div class="dato"><div class="rotulo">Médico remitente</div><div class="valor">Dr. Luis Arévalo</div></div>
+        <div class="dato"><div class="rotulo">Enfermero acompañante</div><div class="valor">Karla Jiménez</div></div>
+      </div>
+      <div style="margin-top:18px">
+        <div class="rotulo secundario">Sintomatología reportada</div>
+        <p>Desorientación nocturna progresiva durante las últimas tres semanas. Episodios de agitación entre las 22:00 y las 02:00. No presenta fiebre ni signos de infección urinaria.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-titulo">Asignación</div>
+    <div class="panel-cuerpo">
+      <div class="rejilla">
+        <div class="campo">
+          <label for="med">Médico especialista</label>
+          <select id="med">
+            <option>Selecciona un especialista</option>
+            <option selected>Dra. Silvia Paz — Neurología</option>
+            <option>Dr. Enrique Batres — Neurología</option>
+          </select>
+          <span class="ayuda">Solo especialistas de la especialidad solicitada</span>
+        </div>
+        <div class="campo"><label for="fec">Fecha de atención</label><input id="fec" type="date" value="2026-09-30"></div>
+        <div class="campo">
+          <label for="blo">Bloque horario disponible</label>
+          <select id="blo">
+            <option>08:00 — 08:30 (ocupado)</option>
+            <option selected>09:00 — 09:30</option>
+            <option>10:30 — 11:00</option>
+            <option>14:00 — 14:30</option>
+          </select>
+          <span class="ayuda">Validado contra la agenda del especialista</span>
+        </div>
+      </div>
+      <div class="acciones">
+        <button class="btn-principal">Asignar cita</button>
+        <a class="btn btn-secundario" href="consola-fundacion.html">Volver</a>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+</body></html>

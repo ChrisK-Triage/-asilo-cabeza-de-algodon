@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Residentes · Asilo Cabeza de Algodón</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/prototipo.css">
+<link rel="stylesheet" href="css/extra.css">
+</head>
+<body>
+<header><div class="barra">
+  <div class="marca">Asilo Cabeza de Algodón<span>Sistema de administración</span></div>
+  <div class="usuario"><strong>Dr. Luis Arévalo</strong>Médico general</div>
+</div></header>
+<div class="cuerpo">
+<aside>
+  <div class="grupo-nav">Módulo clínico</div>
+  <a href="panel-clinico.html">Residentes</a>
+  <a href="crear-remision.html">Remisiones</a>
+  <div class="grupo-nav">Sesión</div>
+  <a href="login.html">Cerrar sesión</a>
+</aside>
+<main>
+  <div class="titulo-pagina">
+    <h1>Residentes</h1>
+    <span class="conteo" id="conteo"></span>
+  </div>
+
+  <div class="aviso" id="aviso"></div>
+
+  <div class="panel">
+    <div class="panel-cuerpo">
+      <h2>Registrar residente</h2>
+      <form id="form-residente">
+        <div class="rejilla">
+          <div class="campo">
+            <label for="nombres">Nombres</label>
+            <input id="nombres" name="nombres" maxlength="100" required placeholder="Rosa Elena">
+          </div>
+          <div class="campo">
+            <label for="apellidos">Apellidos</label>
+            <input id="apellidos" name="apellidos" maxlength="100" required placeholder="Méndez">
+          </div>
+          <div class="campo">
+            <label for="fechaNacimiento">Fecha de nacimiento</label>
+            <input type="date" id="fechaNacimiento" name="fechaNacimiento" required>
+          </div>
+        </div>
+        <div class="rejilla" style="margin-top:14px">
+          <div class="campo">
+            <label for="psicopatologias">Psicopatologías</label>
+            <textarea id="psicopatologias" name="psicopatologias" placeholder="Demencia senil leve"></textarea>
+          </div>
+          <div class="campo">
+            <label for="medicamentosCajon">Medicamentos de cajón</label>
+            <textarea id="medicamentosCajon" name="medicamentosCajon" placeholder="Donepezilo 10 mg cada 24 h"></textarea>
+          </div>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="btn-principal">Registrar residente</button>
+          <button type="reset" class="btn-secundario">Limpiar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-cuerpo" style="padding-bottom:0">
+      <div class="campo" style="max-width:320px">
+        <label for="buscar">Buscar por nombre</label>
+        <input id="buscar" placeholder="Nombre o apellido">
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Residente</th><th class="num">Edad</th><th>Ingreso</th>
+          <th class="num">Familiares</th><th>Estado</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="cuerpo-tabla"></tbody>
+    </table>
+  </div>
+</main>
+</div>
+<script src="js/api.js"></script>
+<script src="js/residentes.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+/* Avisos de resultado y estados de los botones de fila.
+   Lo separo del CSS del prototipo para no mezclar la maqueta
+   original con lo que agrego al conectar la API. */
+
+.aviso { display: none; }
+.aviso.visible { display: block; }
+.aviso-ok    { background: var(--acento-fondo); color: var(--acento); }
+.aviso-error { background: var(--alerta-fondo); color: var(--alerta); }
+
+.btn-fila.peligro:hover { color: var(--alerta); }
+
+.titulo-pagina {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.conteo { color: var(--tinta-suave); font-size: 14px; }

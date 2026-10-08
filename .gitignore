@@ -1,0 +1,27 @@
+## Compilados de .NET
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+*.cache
+
+## Configuracion local con datos sensibles
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+## Visual Studio / VS Code
+.vs/
+.vscode/
+*.swp
+
+## Sistema operativo
+Thumbs.db
+desktop.ini
+.DS_Store
+
+## Capturas y temporales
+*.tmp
+*.log
