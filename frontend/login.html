@@ -4,34 +4,71 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Inicio de sesión · Asilo Cabeza de Algodón</title>
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/prototipo.css">
+<link rel="stylesheet" href="css/extra.css">
+<link rel="stylesheet" href="css/marca.css">
 </head>
 <body>
-<div class="cinta">Prototipo de interfaz — Fase de diseño — Christopher Robles, carné 3090-23-13774</div>
+<!-- Barra negra igual a la del resto del sistema: aunque esta pantalla
+     no tenga sesion todavia, quiero que se reconozca como la misma
+     aplicacion y no como una pagina suelta. -->
+<header><div class="barra">
+  <span class="marca-logo">
+    <img src="img/logo-cabeza-de-algodon-oscuro.svg" alt="Asilo Cabeza de Algodón">
+  </span>
+  <div class="usuario">Sistema de administración</div>
+</div></header>
+
 <div class="centro">
   <div class="caja-login">
-    <h1>Asilo Cabeza de Algodón</h1>
-    <p class="subtitulo">Sistema de administración</p>
-    <div class="campo">
-      <label for="correo">Correo institucional</label>
-      <input id="correo" type="email" value="medico.general@asilo.org">
+    <img class="logo-login" src="img/logo-cabeza-de-algodon.svg" alt="Asilo Cabeza de Algodón">
+    <h1>Inicio de sesión</h1>
+    <p class="subtitulo">Ingrese con su correo institucional</p>
+
+    <form id="form-login">
+      <div class="campo">
+        <label for="correo">Correo institucional</label>
+        <input id="correo" type="email" autocomplete="username"
+               placeholder="medico.general@asilo.org" required>
+      </div>
+      <div class="campo">
+        <label for="clave">Contraseña</label>
+        <input id="clave" type="password" autocomplete="current-password"
+               placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn-principal">Entrar</button>
+    </form>
+
+    <div class="aviso aviso-info" id="aviso-login" style="margin-top:16px">
+      La autenticación con JWT y el control de permisos por rol quedan
+      para la fase de implementación final. Por ahora se entra directo
+      al módulo que corresponde a cada rol.
     </div>
-    <div class="campo">
-      <label for="clave">Contraseña</label>
-      <input id="clave" type="password" value="············">
-    </div>
-    <button class="btn-principal">Entrar</button>
+
     <div class="nota-proto">
-      Navegación del prototipo por rol:
+      Acceso por rol mientras no hay autenticación:
       <a href="panel-clinico.html">Médico general — panel clínico</a>
-      <a href="consola-fundacion.html">Fundación — consola de asignación</a>
+      <a href="consola-fundacion.html">Fundación — asignación de citas</a>
       <a href="panel-laboratorio.html">Laboratorio y farmacia — órdenes</a>
       <a href="estado-cuenta.html">Administrador — estado de cuenta</a>
     </div>
   </div>
 </div>
+
+<script>
+// Sin backend de autenticacion todavia: dejo el envio del formulario
+// desactivado y mando al panel clinico, que es el rol por omision.
+// Cuando exista el endpoint de login, aqui va el fetch del token.
+document.getElementById("form-login").addEventListener("submit", evento => {
+    evento.preventDefault();
+    window.location.href = "panel-clinico.html";
+});
+</script>
 </body>
 </html>

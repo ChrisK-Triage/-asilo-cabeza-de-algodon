@@ -1,0 +1,192 @@
+/* ============================================================
+   marca.css
+   Identidad visual del asilo. Se carga despues de prototipo.css
+   y redefine las variables de color sin tocar la maqueta base.
+
+   Paleta:
+     beige   #D9CDB8  fondo de pagina
+     negro   #1A1A1A  texto y barra superior
+     naranja #F2622D  acciones y acentos
+
+   El naranja queda reservado para acciones. Los estados usan
+   colores propios: si el naranja fuera tambien "pendiente", un
+   distintivo de estado se confundiria con un boton.
+   ============================================================ */
+
+:root {
+    /* --- Marca --- */
+    --beige:         #D9CDB8;
+    --beige-claro:   #EDE6DA;
+    --beige-palido:  #F7F3EC;
+    --negro:         #1A1A1A;
+    --naranja:       #F2622D;
+    --naranja-oscuro:#C94A1B;
+    --naranja-palido:#FDEDE6;
+
+    /* --- Redefinicion de la paleta base --- */
+    --tinta:        #1A1A1A;
+    --tinta-media:  #5C564C;
+    --tinta-suave:  #8C8578;
+    --linea:        #DDD5C7;
+    --fondo:        #F2EDE4;
+    --papel:        #FFFFFF;
+
+    /* Acento de interfaz = naranja de marca */
+    --acento:        #C94A1B;
+    --acento-fondo:  #FDEDE6;
+
+    /* Estados: separados del naranja para que no compitan */
+    --alerta:        #9E2B2B;
+    --alerta-fondo:  #FAE8E6;
+    --espera:        #8A6A1F;   /* mostaza, no naranja */
+    --espera-fondo:  #F7EFD9;
+    --proceso:       #2F6B6B;   /* verde azulado */
+    --proceso-fondo: #E3F0EF;
+    --exito:         #3D6B2E;
+    --exito-fondo:   #E9F2E3;
+
+    --radio: 6px;
+}
+
+/* ---------- Encabezado con el logo ---------- */
+
+header {
+    background: var(--negro);
+    border-bottom: 3px solid var(--naranja);
+    padding: 0 24px;
+}
+
+.barra { height: 64px; }
+
+.marca-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+
+.marca-logo img {
+    height: 38px;
+    width: auto;
+    display: block;
+}
+
+/* Texto de la marca cuando no se usa el logo completo */
+.marca      { color: #FFFFFF; }
+.marca span { color: var(--beige); }
+
+.usuario        { color: var(--beige); }
+.usuario strong { color: #FFFFFF; }
+
+/* ---------- Navegacion lateral ---------- */
+
+aside a:hover {
+    background: var(--beige-claro);
+    color: var(--negro);
+}
+
+aside a.activo {
+    background: var(--negro);
+    color: #FFFFFF;
+}
+
+.grupo-nav {
+    color: var(--tinta-suave);
+    text-transform: none;
+    letter-spacing: 0.02em;
+}
+
+/* ---------- Botones ---------- */
+
+.btn-principal {
+    background: var(--naranja);
+    color: #FFFFFF;
+    font-weight: 500;
+    border: 1px solid var(--naranja);
+}
+
+.btn-principal:hover {
+    background: var(--naranja-oscuro);
+    border-color: var(--naranja-oscuro);
+}
+
+.btn-secundario {
+    background: var(--papel);
+    color: var(--negro);
+    border-color: var(--linea);
+}
+
+.btn-secundario:hover { background: var(--beige-palido); }
+
+.btn-fila         { color: var(--tinta-media); }
+.btn-fila:hover   { color: var(--naranja-oscuro); }
+.btn-fila.peligro:hover { color: var(--alerta); }
+
+/* ---------- Formularios ---------- */
+
+input:focus, select:focus, textarea:focus {
+    outline: 2px solid var(--naranja);
+    outline-offset: -1px;
+    border-color: transparent;
+}
+
+/* ---------- Tablas ---------- */
+
+thead th {
+    background: var(--beige-palido);
+    color: var(--tinta-media);
+    font-weight: 500;
+}
+
+tbody tr:hover { background: var(--beige-palido); }
+
+/* ---------- Distintivos de estado ---------- */
+
+.e-pendiente { background: var(--espera-fondo);  color: var(--espera); }
+.e-proceso   { background: var(--proceso-fondo); color: var(--proceso); }
+.e-completo  { background: var(--exito-fondo);   color: var(--exito); }
+.e-cancelado { background: var(--alerta-fondo);  color: var(--alerta); }
+
+/* ---------- Avisos ---------- */
+
+.aviso-ok    { background: var(--exito-fondo);  color: var(--exito); }
+.aviso-error { background: var(--alerta-fondo); color: var(--alerta); }
+.aviso-info  { background: var(--naranja-palido); color: var(--naranja-oscuro); }
+
+/* ---------- Tarjetas de resumen ---------- */
+
+.tarjeta {
+    background: var(--papel);
+    border: 1px solid var(--linea);
+    border-left: 3px solid var(--naranja);
+}
+
+.tarjeta .cifra { color: var(--negro); }
+
+/* ---------- Antiguedad destacada ---------- */
+
+.antiguedad {
+    color: var(--naranja-oscuro);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* ---------- Pantalla de inicio de sesion ---------- */
+
+/* Descuento la altura de la barra negra: con el header puesto,
+   100vh dejaba la caja desplazada hacia abajo y aparecia scroll. */
+.centro {
+    background: var(--fondo);
+    min-height: calc(100vh - 67px);
+}
+
+.caja-login {
+    border-top: 4px solid var(--naranja);
+}
+
+.caja-login .logo-login {
+    display: block;
+    width: 100%;
+    max-width: 240px;
+    margin: 0 auto 24px;
+}
