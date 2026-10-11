@@ -52,6 +52,7 @@ function pintarTabla() {
                 ${r.activo ? "Activo" : "Inactivo"}
             </span></td>
             <td class="der">
+                <button class="btn-fila" onclick="abrirFamiliares(${r.id})">Familiares</button>
                 <a class="btn-fila" href="crear-remision.html?residente=${r.id}">Crear remision</a>
                 <button class="btn-fila peligro" onclick="darDeBaja(${r.id})">Dar de baja</button>
             </td>

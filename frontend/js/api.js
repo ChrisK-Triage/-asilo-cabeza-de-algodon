@@ -49,6 +49,8 @@ const api = {
     crear:    (recurso, datos) => apiFetch(recurso, { method: "POST", body: JSON.stringify(datos) }),
     editar:   (recurso, id, datos) => apiFetch(`${recurso}/${id}`, { method: "PUT", body: JSON.stringify(datos) }),
     parchar:  (ruta, datos) => apiFetch(ruta, { method: "PATCH", body: JSON.stringify(datos) }),
+    // Para subrutas como laboratorio/ordenes/5/resultado
+    enviarPut: (ruta, datos) => apiFetch(ruta, { method: "PUT", body: JSON.stringify(datos) }),
     eliminar: (recurso, id) => apiFetch(`${recurso}/${id}`, { method: "DELETE" })
 };
 
@@ -72,6 +74,19 @@ function fecha(iso) {
 
 function fechaInput(iso) {
     return iso ? iso.split("T")[0] : "";
+}
+
+function fechaHora(iso) {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    return d.toLocaleDateString("es-GT", { day: "2-digit", month: "2-digit", year: "numeric" })
+         + " · " + d.toLocaleTimeString("es-GT", { hour: "2-digit", minute: "2-digit" });
+}
+
+function moneda(valor) {
+    return new Intl.NumberFormat("es-GT", {
+        style: "currency", currency: "GTQ", minimumFractionDigits: 2
+    }).format(valor ?? 0);
 }
 
 function mostrarAviso(mensaje, tipo = "ok") {

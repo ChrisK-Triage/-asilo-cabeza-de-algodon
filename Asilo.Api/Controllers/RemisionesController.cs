@@ -70,19 +70,50 @@ public class RemisionesController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id }, creada);
     }
 
-    /// <summary>Cambia el estado de una remision (la fundacion la programa o se cancela).</summary>
+    /// <summary>
+    /// Cancela una remision pendiente.
+    ///
+    /// Solo permite pasar a Cancelada. El paso a Programada lo hace
+    /// POST /api/citas al asignar especialista y horario: una remision
+    /// programada sin cita no tiene sentido, desaparece de la consola de
+    /// la fundacion y no hay nada que atender.
+    /// </summary>
     [HttpPatch("{id:int}/estado")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> CambiarEstado(int id, CambiarEstadoDto dto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        if (!await _repo.ExisteAsync(id))
+        var remision = await _repo.ObtenerPorIdAsync(id);
+        if (remision is null)
             return NotFound(new { mensaje = $"No existe una remision con Id {id}." });
 
-        await _repo.CambiarEstadoAsync(id, dto.Estado);
+        // Programar exige crear la cita. Este endpoint no puede hacerlo.
+        if (dto.Estado == EstadoRemision.Programada)
+            return BadRequest(new
+            {
+                mensaje = "Para programar una remision debe asignarse especialista y horario desde POST /api/citas. " +
+                          "Este endpoint solo permite cancelar."
+            });
+
+        if (dto.Estado == EstadoRemision.Pendiente)
+            return BadRequest(new { mensaje = "Una remision no puede devolverse a estado Pendiente." });
+
+        // A partir de aqui solo queda Cancelada.
+        if (remision.Estado == "Cancelada")
+            return Conflict(new { mensaje = "Esta remision ya esta cancelada." });
+
+        if (remision.Estado == "Programada")
+            return Conflict(new
+            {
+                mensaje = "Esta remision ya tiene cita asignada. Para anularla debe cancelarse la cita, " +
+                          "no la remision."
+            });
+
+        await _repo.CambiarEstadoAsync(id, EstadoRemision.Cancelada);
         return NoContent();
     }
 }

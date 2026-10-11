@@ -3,58 +3,179 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Órdenes pendientes · Asilo Cabeza de Algodón</title>
+<title>Laboratorio y farmacia · Asilo Cabeza de Algodón</title>
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/prototipo.css">
+<link rel="stylesheet" href="css/extra.css">
+<link rel="stylesheet" href="css/marca.css">
 </head>
 <body>
-<div class="cinta">Prototipo de interfaz — Fase de diseño — Christopher Robles, carné 3090-23-13774</div>
 <header><div class="barra">
-  <div class="marca">Asilo Cabeza de Algodón<span>Sistema de administración</span></div>
+  <a class="marca-logo" href="panel-clinico.html">
+    <img src="img/logo-cabeza-de-algodon-oscuro.svg" alt="Asilo Cabeza de Algodón">
+  </a>
   <div class="usuario"><strong>Tec. Byron Calderón</strong>Laboratorio y farmacia</div>
 </div></header>
 <div class="cuerpo">
 <aside>
-  <div class="grupo-nav">Anexos clínicos</div>
-  <a href="panel-laboratorio.html" class="activo">Órdenes pendientes</a>
-  <a href="#">Resultados cargados</a>
-  <a href="#">Despachos de farmacia</a>
+  <div class="grupo-nav">Módulo clínico</div>
+  <a href="panel-clinico.html">Residentes</a>
+  <a href="crear-remision.html">Remisiones</a>
+  <div class="grupo-nav">Fundación</div>
+  <a href="consola-fundacion.html">Asignación de citas</a>
+  <div class="grupo-nav">Exámenes y medicamentos</div>
+  <a href="panel-laboratorio.html">Laboratorio y farmacia</a>
+  <div class="grupo-nav">Sesión</div>
   <a href="login.html">Cerrar sesión</a>
 </aside>
 <main>
-  <h1>Órdenes pendientes</h1>
-  <p class="subtitulo">3 órdenes esperan carga de resultados o despacho</p>
+  <div class="titulo-pagina">
+    <h1>Laboratorio y farmacia</h1>
+  </div>
+
+  <div class="aviso" id="aviso"></div>
+
+  <h2>Laboratorio</h2>
 
   <div class="panel">
+    <div class="panel-cuerpo">
+      <form id="form-orden">
+        <div class="rejilla">
+          <div class="campo">
+            <label for="citaId">Cita asociada</label>
+            <select id="citaId" name="citaId" required></select>
+            <span class="ayuda">Solo se muestran citas no liquidadas</span>
+          </div>
+          <div class="campo">
+            <label for="tipoExamen">Examen solicitado</label>
+            <input id="tipoExamen" name="tipoExamen" maxlength="150" required placeholder="Hemograma completo">
+          </div>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="btn-principal">Solicitar examen</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="titulo-pagina">
+    <h2 style="margin:0">Órdenes</h2>
+    <span class="conteo" id="conteo-ordenes"></span>
+  </div>
+
+  <div class="panel">
+    <div class="panel-cuerpo" style="padding-bottom:0">
+      <div class="campo" style="max-width:240px">
+        <label for="filtro-ordenes">Filtrar por estado</label>
+        <select id="filtro-ordenes">
+          <option value="">Todas</option>
+          <option value="Pendiente">Pendientes</option>
+          <option value="Completada">Completadas</option>
+        </select>
+      </div>
+    </div>
     <table>
-      <thead><tr><th>Residente</th><th>Orden</th><th>Solicitada por</th><th>Estado</th><th></th></tr></thead>
-      <tbody>
-        <tr><td>Rosa Elena Méndez<div class="secundario">Cita CIT-2026-0311</div></td><td>Hemograma completo<div class="secundario">Laboratorio</div></td><td>Dra. Silvia Paz</td><td><span class="estado e-pendiente">Esperando anexos</span></td><td class="der"><a class="btn-fila" href="#carga">Cargar resultado</a></td></tr>
-        <tr><td>Julio César Ramírez<div class="secundario">Cita CIT-2026-0308</div></td><td>Perfil lipídico<div class="secundario">Laboratorio</div></td><td>Dr. Mario Coronado</td><td><span class="estado e-pendiente">Esperando anexos</span></td><td class="der"><a class="btn-fila" href="#carga">Cargar resultado</a></td></tr>
-        <tr><td>Marta Lucía Ortiz<div class="secundario">Cita CIT-2026-0305</div></td><td>Metformina 850 mg × 30<div class="secundario">Farmacia</div></td><td>Dr. Mario Coronado</td><td><span class="estado e-proceso">En despacho</span></td><td class="der"><a class="btn-fila" href="#carga">Registrar despacho</a></td></tr>
-      </tbody>
+      <thead>
+        <tr>
+          <th>Residente</th><th>Examen y resultado</th><th>Solicitada</th>
+          <th class="num">Costo</th><th>Estado</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="cuerpo-ordenes"></tbody>
     </table>
   </div>
 
-  <div class="panel" id="carga">
-    <div class="panel-titulo">Cargar resultado — Hemograma completo</div>
+  <div class="panel" id="panel-resultado" style="display:none">
+    <div class="panel-titulo">Cargar resultado</div>
     <div class="panel-cuerpo">
-      <div class="rejilla">
-        <div class="campo"><label for="pac">Residente</label><input id="pac" value="Rosa Elena Méndez" readonly></div>
-        <div class="campo"><label for="cit">Cita asociada</label><input id="cit" value="CIT-2026-0311" readonly></div>
-        <div class="campo"><label for="cos">Costo bruto del procedimiento (Q)</label><input id="cos" type="number" value="185.00" step="0.01"></div>
-        <div class="campo"><label for="arc">Archivo de resultados</label><input id="arc" type="file"></div>
-        <div class="campo ancho"><label for="res">Resultados o observaciones</label><textarea id="res" placeholder="Transcribe los valores relevantes o adjunta el archivo del equipo."></textarea></div>
-      </div>
-      <div class="acciones">
-        <button class="btn-principal">Aplicar a expediente</button>
-        <button class="btn-secundario">Cancelar</button>
-      </div>
-      <p class="ayuda" style="margin-top:12px">El costo ingresado se enviará al módulo financiero para la liquidación mensual con el descuento del convenio.</p>
+      <div id="detalle-orden"></div>
+
+      <form id="form-resultado" style="margin-top:20px;padding-top:18px;border-top:1px solid var(--linea)">
+        <div class="campo">
+          <label for="resultado">Resultados u observaciones</label>
+          <textarea id="resultado" name="resultado" required
+            placeholder="Transcribe los valores relevantes del equipo."></textarea>
+        </div>
+        <div class="rejilla" style="margin-top:14px;max-width:320px">
+          <div class="campo">
+            <label for="costoBruto">Costo del procedimiento (Q)</label>
+            <input type="number" id="costoBruto" name="costoBruto" min="0" step="0.01" required placeholder="185.00">
+          </div>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="btn-principal">Aplicar al expediente</button>
+          <button type="button" class="btn-secundario" id="btn-cerrar-resultado">Cancelar</button>
+        </div>
+        <p class="ayuda" style="margin-top:12px">
+          El costo ingresado pasa al módulo financiero para la liquidación mensual con el descuento del convenio.
+        </p>
+      </form>
     </div>
+  </div>
+
+  <h2 style="margin-top:32px">Farmacia</h2>
+
+  <div class="panel">
+    <div class="panel-cuerpo">
+      <form id="form-despacho">
+        <div class="rejilla">
+          <div class="campo">
+            <label for="citaIdFarmacia">Cita asociada</label>
+            <select id="citaIdFarmacia" name="citaId" required></select>
+          </div>
+          <div class="campo">
+            <label for="medicamento">Medicamento</label>
+            <input id="medicamento" name="medicamento" maxlength="150" required placeholder="Donepezilo 10 mg">
+          </div>
+          <div class="campo">
+            <label for="cantidad">Cantidad</label>
+            <input type="number" id="cantidad" name="cantidad" min="1" max="10000" required placeholder="30">
+          </div>
+          <div class="campo">
+            <label for="costoUnitario">Costo unitario (Q)</label>
+            <input type="number" id="costoUnitario" name="costoUnitario" min="0" step="0.01" required placeholder="8.00">
+          </div>
+          <div class="campo">
+            <label for="tiempoAplicacion">Tiempo de aplicación</label>
+            <input id="tiempoAplicacion" name="tiempoAplicacion" maxlength="100" placeholder="1 tableta cada 24 horas">
+          </div>
+          <div class="campo">
+            <label>Costo total</label>
+            <div style="font-size:19px;font-weight:600;padding:8px 0" id="vista-total">Q 0.00</div>
+                      </div>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="btn-principal">Registrar despacho</button>
+          <button type="reset" class="btn-secundario">Limpiar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="titulo-pagina">
+    <h2 style="margin:0">Despachos registrados</h2>
+    <span class="conteo" id="conteo-despachos"></span>
+  </div>
+
+  <div class="panel">
+    <table>
+      <thead>
+        <tr>
+          <th>Residente</th><th>Medicamento</th>
+          <th class="num">Cantidad</th><th class="num">Unitario</th><th class="num">Total</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpo-despachos"></tbody>
+    </table>
   </div>
 </main>
 </div>
-</body></html>
+<script src="js/api.js"></script>
+<script src="js/anexos.js"></script>
+</body>
+</html>

@@ -83,13 +83,22 @@ function pintarTabla() {
             </td>
             <td><span class="estado ${claseEstado(r.estado)}">${limpiar(r.estado)}</span></td>
             <td class="der">
-                ${r.estado === "Pendiente"
-                    ? `<button class="btn-fila" onclick="cambiarEstado(${r.id}, 'Programada')">Programar</button>
-                       <button class="btn-fila peligro" onclick="cambiarEstado(${r.id}, 'Cancelada')">Cancelar</button>`
-                    : `<span class="secundario">Sin acciones</span>`}
+                ${accionesFila(r)}
             </td>
         </tr>
     `).join("");
+}
+
+// La fundacion programa desde su propia consola al asignar especialista
+// y horario. Desde aqui el medico solo puede cancelar lo que emitio.
+function accionesFila(r) {
+    if (r.estado === "Pendiente") {
+        return `<button class="btn-fila peligro" onclick="cancelar(${r.id})">Cancelar</button>`;
+    }
+    if (r.estado === "Programada") {
+        return `<span class="secundario">Cita asignada</span>`;
+    }
+    return `<span class="secundario">Sin acciones</span>`;
 }
 
 function claseEstado(estado) {
@@ -121,10 +130,25 @@ async function guardar(evento) {
     }
 }
 
-async function cambiarEstado(id, nuevoEstado) {
+async function cancelar(id) {
+    const r = remisiones.find(x => x.id === id);
+
+    // Cancelar es irreversible: no hay forma de devolver una remision
+    // cancelada a pendiente. Confirmacion proporcional al riesgo.
+    const confirmado = confirm(
+        `Cancelar la remision de ${r.residenteNombre}?\n\n` +
+        `Especialidad: ${r.especialidadSolicitada}\n` +
+        `Solicitada: ${fecha(r.fechaSolicitud)}\n\n` +
+        `La remision dejara de aparecer como pendiente para la fundacion ` +
+        `y no se podra reactivar. Si el residente sigue necesitando la ` +
+        `consulta, habra que emitir una remision nueva.`
+    );
+
+    if (!confirmado) return;
+
     try {
-        await api.parchar(`remisiones/${id}/estado`, { estado: nuevoEstado });
-        mostrarAviso(`Remision marcada como ${nuevoEstado.toLowerCase()}.`);
+        await api.parchar(`remisiones/${id}/estado`, { estado: "Cancelada" });
+        mostrarAviso("Remision cancelada.");
         cargarRemisiones();
     } catch (error) {
         mostrarAviso(error.message, "error");

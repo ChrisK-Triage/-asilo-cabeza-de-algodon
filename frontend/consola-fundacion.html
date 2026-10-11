@@ -4,66 +4,142 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Consola de fundación · Asilo Cabeza de Algodón</title>
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/prototipo.css">
+<link rel="stylesheet" href="css/extra.css">
+<link rel="stylesheet" href="css/marca.css">
 </head>
 <body>
-<div class="cinta">Prototipo de interfaz — Fase de diseño — Christopher Robles, carné 3090-23-13774</div>
 <header><div class="barra">
-  <div class="marca">Asilo Cabeza de Algodón<span>Sistema de administración</span></div>
+  <a class="marca-logo" href="panel-clinico.html">
+    <img src="img/logo-cabeza-de-algodon-oscuro.svg" alt="Asilo Cabeza de Algodón">
+  </a>
   <div class="usuario"><strong>Lic. Andrea Solís</strong>Coordinadora — Fundación</div>
 </div></header>
 <div class="cuerpo">
 <aside>
+  <div class="grupo-nav">Módulo clínico</div>
+  <a href="panel-clinico.html">Residentes</a>
+  <a href="crear-remision.html">Remisiones</a>
   <div class="grupo-nav">Fundación</div>
-  <a href="consola-fundacion.html" class="activo">Remisiones pendientes</a>
-  <a href="#">Agenda de citas</a>
-  <a href="#">Especialistas</a>
-  <div class="grupo-nav">Clínico</div>
-  <a href="#">Bitácoras de consulta</a>
+  <a href="consola-fundacion.html">Asignación de citas</a>
+  <div class="grupo-nav">Exámenes y medicamentos</div>
+  <a href="panel-laboratorio.html">Laboratorio y farmacia</a>
+  <div class="grupo-nav">Sesión</div>
   <a href="login.html">Cerrar sesión</a>
 </aside>
 <main>
-  <h1>Remisiones pendientes</h1>
-  <p class="subtitulo">4 solicitudes esperan asignación de especialista y horario</p>
+  <div class="titulo-pagina">
+    <h1>Asignación de citas</h1>
+    <span class="conteo" id="conteo-pendientes"></span>
+  </div>
 
+  <div class="aviso" id="aviso"></div>
+
+  <h2>Remisiones pendientes</h2>
   <div class="panel">
     <table>
-      <thead><tr><th>Residente y motivo</th><th>Especialidad</th><th>Solicitada</th><th>Prioridad</th><th></th></tr></thead>
-      <tbody>
+      <thead>
         <tr>
-          <td>Rosa Elena Méndez<div class="secundario">Desorientación nocturna progresiva</div></td>
-          <td>Neurología</td>
-          <td>22/09/2026<div class="antiguedad">Hace 3 días</div></td>
-          <td><span class="estado e-pendiente">Preferente</span></td>
-          <td class="der"><a class="btn-fila" href="asignar-cita.html">Asignar</a></td>
+          <th>Residente</th><th>Especialidad</th><th>Motivo</th>
+          <th>Solicitada</th><th></th>
         </tr>
-        <tr>
-          <td>Julio César Ramírez<div class="secundario">Control de presión no estabilizado</div></td>
-          <td>Cardiología</td>
-          <td>24/09/2026<div class="secundario">Hace 1 día</div></td>
-          <td><span class="estado e-pendiente">Ordinaria</span></td>
-          <td class="der"><a class="btn-fila" href="asignar-cita.html">Asignar</a></td>
-        </tr>
-        <tr>
-          <td>Fernando Aguilar<div class="secundario">Dolor lumbar tras caída</div></td>
-          <td>Traumatología</td>
-          <td>17/09/2026<div class="antiguedad">Hace 8 días</div></td>
-          <td><span class="estado e-cancelado">Urgente</span></td>
-          <td class="der"><a class="btn-fila" href="asignar-cita.html">Asignar</a></td>
-        </tr>
-        <tr>
-          <td>Marta Lucía Ortiz<div class="secundario">Revisión de agudeza visual</div></td>
-          <td>Oftalmología</td>
-          <td>25/09/2026<div class="secundario">Hoy</div></td>
-          <td><span class="estado e-pendiente">Ordinaria</span></td>
-          <td class="der"><a class="btn-fila" href="asignar-cita.html">Asignar</a></td>
-        </tr>
-      </tbody>
+      </thead>
+      <tbody id="cuerpo-pendientes"></tbody>
     </table>
+  </div>
+
+  <div class="panel" id="panel-asignar" style="display:none">
+    <div class="panel-titulo">Asignar especialista y horario</div>
+    <div class="panel-cuerpo">
+      <div id="detalle-remision"></div>
+
+      <form id="form-asignar" style="margin-top:20px;padding-top:18px;border-top:1px solid var(--linea)">
+        <div class="rejilla">
+          <div class="campo">
+            <label for="especialistaId">Médico especialista</label>
+            <select id="especialistaId" name="especialistaId" required></select>
+            <span class="ayuda">Se marca cuando la especialidad no coincide con la solicitada</span>
+          </div>
+          <div class="campo">
+            <label for="bloqueHorario">Fecha y hora</label>
+            <input type="datetime-local" id="bloqueHorario" name="bloqueHorario" required>
+            <span class="ayuda">Se valida contra la agenda del especialista</span>
+          </div>
+          <div class="campo">
+            <label for="costoConsulta">Costo de la consulta (Q)</label>
+            <input type="number" id="costoConsulta" name="costoConsulta" min="0" step="0.01" placeholder="350.00">
+          </div>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="btn-principal">Asignar cita</button>
+          <button type="button" class="btn-secundario" id="btn-cerrar-form">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="titulo-pagina" style="margin-top:32px">
+    <h2 style="margin:0">Agenda de citas</h2>
+    <span class="conteo" id="conteo-citas"></span>
+  </div>
+
+  <div class="panel">
+    <div class="panel-cuerpo" style="padding-bottom:0">
+      <div class="campo" style="max-width:260px">
+        <label for="filtro-estado">Filtrar por estado</label>
+        <select id="filtro-estado">
+          <option value="">Todas</option>
+          <option value="Programada">Sin consulta registrada</option>
+          <option value="EsperandoAnexos">Esperando exámenes o medicamentos</option>
+          <option value="BitacoraCompletada">Consulta cerrada</option>
+        </select>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Residente</th><th>Especialista</th><th>Horario</th>
+          <th class="num">Costo</th><th>Estado</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="cuerpo-citas"></tbody>
+    </table>
+  </div>
+  <div class="panel" id="panel-diagnostico" style="display:none">
+    <div class="panel-titulo">Registrar la consulta</div>
+    <div class="panel-cuerpo">
+      <div id="detalle-cita"></div>
+
+      <form id="form-diagnostico" style="margin-top:20px;padding-top:18px;border-top:1px solid var(--linea)">
+        <div class="campo">
+          <label for="diagnostico">Diagnóstico</label>
+          <textarea id="diagnostico" name="diagnostico" required
+            placeholder="Hallazgos de la consulta, impresión diagnóstica e indicaciones."></textarea>
+          <span class="ayuda">Una vez guardado no se puede modificar: el expediente clínico es un registro histórico</span>
+        </div>
+        <div class="campo" style="margin-top:14px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="requiereAnexos" name="requiereAnexos" style="width:auto">
+            El residente necesita exámenes de laboratorio o medicamentos
+          </label>
+          <span class="ayuda">Si lo marcas, la cita queda abierta esperando esos registros</span>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="btn-principal">Guardar consulta</button>
+          <button type="button" class="btn-secundario" id="btn-cerrar-diagnostico">Cancelar</button>
+        </div>
+      </form>
+    </div>
   </div>
 </main>
 </div>
-</body></html>
+<script src="js/api.js"></script>
+<script src="js/fundacion.js"></script>
+</body>
+</html>
