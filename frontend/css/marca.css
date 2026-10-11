@@ -163,6 +163,108 @@ tbody tr:hover { background: var(--beige-palido); }
 
 .tarjeta .cifra { color: var(--negro); }
 
+/* Advertencia bajo un campo: no es un error de validacion, es una
+   consecuencia que conviene saber antes de guardar. */
+.ayuda-alerta {
+    color: var(--alerta);
+    font-weight: 500;
+}
+
+/* ---------- Ancho de la maqueta ----------
+   prototipo.css limita el contenido a 1120px, que era razonable
+   cuando las tablas tenian cinco columnas. Con el DPI pasaron a
+   siete y ya no caben: al area principal le quedaban unos 830px
+   descontando la barra lateral, los margenes y el espacio entre
+   ambos.
+
+   Subo el tope a 1400px. En una pantalla ancha la tabla entra
+   completa y se acaba el desplazamiento lateral; en una angosta no
+   cambia nada, porque max-width es un techo y no un ancho fijo.
+
+   Muevo tambien la barra superior para que el logo siga alineado
+   con el contenido de abajo. */
+
+.barra,
+.cuerpo { max-width: 1400px; }
+
+/* ---------- Tablas anchas dentro del panel ----------
+   Al agregar la columna del DPI, la tabla de residentes paso a
+   necesitar mas ancho del que tiene el panel y se salia por la
+   derecha: las filas sobrepasaban el borde y la ultima accion
+   quedaba pegada al filo.
+
+   La causa es que las columnas numericas y la de acciones llevan
+   white-space: nowrap, asi que se niegan a encogerse, y la tabla
+   termina pidiendo mas ancho del disponible.
+
+   La solucion principal es el ancho de arriba: con 1400px la tabla
+   entra completa y no hay que desplazar nada.
+
+   Dejo igual el overflow como red de seguridad. No se activa
+   mientras la tabla quepa, pero en una pantalla angosta evita que
+   las filas se salgan del panel y rompan la maqueta. */
+
+.panel { overflow-x: auto; }
+
+/* Ancho minimo para que el nombre no se parta en tres renglones
+   cuando el resto de columnas aprieta. */
+tbody td:first-child { min-width: 180px; }
+
+/* El DPI son trece digitos que siempre ocupan lo mismo: con ancho
+   fijo la columna no baila entre una fila y otra. */
+.dpi {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* ---------- Paginacion ----------
+   Controles bajo la tabla, alineados a la derecha, con el rango de
+   filas a la izquierda de las flechas. */
+
+.paginador {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--linea);
+}
+
+/* Sin controles no quiero el borde ni el espacio en blanco. */
+.paginador:empty { display: none; }
+
+.paginador .rango {
+    font-size: 13px;
+    color: var(--tinta-media);
+    margin-right: 10px;
+    font-variant-numeric: tabular-nums;
+}
+
+.btn-pagina {
+    background: var(--papel);
+    border: 1px solid var(--linea);
+    color: var(--negro);
+    border-radius: var(--radio);
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    font-size: 17px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.btn-pagina:hover:not(:disabled) {
+    background: var(--beige-palido);
+    border-color: var(--naranja);
+    color: var(--naranja-oscuro);
+}
+
+.btn-pagina:disabled {
+    color: var(--tinta-suave);
+    cursor: default;
+    opacity: 0.5;
+}
+
 /* ---------- Antiguedad destacada ---------- */
 
 .antiguedad {
@@ -170,6 +272,26 @@ tbody tr:hover { background: var(--beige-palido); }
     font-size: 12px;
     font-weight: 500;
 }
+
+/* ---------- Cinta de maqueta ----------
+   Las pantallas que quedaron del prototipo de la fase de diseno
+   llevan datos escritos a mano. Las dejo accesibles porque
+   documentan el diseno, pero con una advertencia que no se puede
+   pasar por alto: sus cifras no salen de la base de datos. */
+
+.cinta-maqueta {
+    background: var(--alerta);
+    color: #FFFFFF;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    padding: 9px 20px;
+    line-height: 1.4;
+}
+
+/* El enlace a una maqueta no puede verse igual que los que llevan
+   a pantallas que si funcionan. */
+.nota-proto a.enlace-maqueta          { color: var(--alerta); }
+.nota-proto a.enlace-maqueta strong   { font-weight: 500; }
 
 /* ---------- Pantalla de inicio de sesion ---------- */
 

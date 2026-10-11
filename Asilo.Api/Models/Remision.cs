@@ -8,8 +8,12 @@ public class Remision
     public int ResidenteId { get; set; }
     public int MedicoGeneralId { get; set; }
     public string Sintomatologia { get; set; } = string.Empty;
-    public string EspecialidadSolicitada { get; set; } = string.Empty;
-    public string? EnfermeroAsignado { get; set; }
+
+    // Llaves foraneas a los catalogos. Antes eran texto libre, asi que
+    // "Neurologia" y "Neurología" contaban como especialidades distintas
+    // y dos escrituras del mismo enfermero eran dos enfermeros.
+    public int EspecialidadId { get; set; }
+    public int? EnfermeroId { get; set; }
     public DateTime FechaSolicitud { get; set; }
     public EstadoRemision Estado { get; set; }
 

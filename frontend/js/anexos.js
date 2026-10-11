@@ -31,25 +31,46 @@ async function cargarCitas() {
     try {
         citasDisponibles = await api.listar("citas");
 
-        // Solo ofrezco citas con consulta ya registrada y sin liquidar.
-        // Un examen o un medicamento los indica el especialista: si no hay
-        // diagnostico, no hay nada que respalde el cargo.
-        const utilizables = citasDisponibles.filter(c => c.diagnostico && !c.liquidada);
+        // Cada select lleva su propia lista: una cita puede estar
+        // esperando examenes y no medicamentos, o al reves.
+        //
+        // Tres condiciones para que una cita aparezca:
+        //   1. tiene diagnostico, porque el anexo lo indica el especialista
+        //   2. sigue en "Esperando anexos", o sea la bitacora no ha cerrado
+        //   3. el especialista marco ese destino en particular
+        //
+        // Antes filtraba solo por diagnostico y por liquidada, y el select
+        // seguia ofreciendo citas ya cerradas. La API tambien las rechaza,
+        // pero no tiene sentido ofrecer algo que se va a rechazar.
+        const abierta = c =>
+            c.diagnostico && !c.liquidada && c.estado === "Esperando anexos";
 
-        const opciones = utilizables.map(c =>
+        const paraLaboratorio = citasDisponibles.filter(c => abierta(c) && c.requiereLaboratorio);
+        const paraFarmacia    = citasDisponibles.filter(c => abierta(c) && c.requiereFarmacia);
+
+        const vacio = `<option value="">Selecciona una cita</option>`;
+        const opcionesDe = lista => lista.map(c =>
             `<option value="${c.id}">
                 #${c.id} — ${limpiar(c.residenteNombre)} (${limpiar(c.especialidadSolicitada)})
              </option>`
         ).join("");
 
-        const vacio = `<option value="">Selecciona una cita</option>`;
-        formOrden.citaId.innerHTML = vacio + opciones;
-        document.getElementById("citaIdFarmacia").innerHTML = vacio + opciones;
+        formOrden.citaId.innerHTML = paraLaboratorio.length
+            ? vacio + opcionesDe(paraLaboratorio)
+            : `<option value="">No hay citas esperando exámenes</option>`;
+
+        document.getElementById("citaIdFarmacia").innerHTML = paraFarmacia.length
+            ? vacio + opcionesDe(paraFarmacia)
+            : `<option value="">No hay citas esperando medicamentos</option>`;
 
         if (citasDisponibles.length === 0) {
             mostrarAviso("Aún no hay citas registradas. La fundación debe asignar una cita primero.", "info");
-        } else if (utilizables.length === 0) {
-            mostrarAviso("Ninguna cita tiene consulta registrada todavía. El especialista debe valorar al residente antes de que se puedan solicitar exámenes o despachar medicamentos.", "info");
+        } else if (paraLaboratorio.length === 0 && paraFarmacia.length === 0) {
+            mostrarAviso(
+                "Ninguna cita está esperando exámenes ni medicamentos. " +
+                "El especialista debe registrar la consulta e indicar qué necesita el residente.",
+                "info"
+            );
         }
     } catch (error) {
         mostrarAviso(error.message, "error");
@@ -125,6 +146,8 @@ async function crearOrden(evento) {
     try {
         await api.crear("laboratorio/ordenes", datos);
         mostrarAviso("Orden de laboratorio solicitada.");
+        // Recargo el catalogo: la cita pudo cambiar de estado.
+        await cargarCitas();
         formOrden.reset();
         cargarOrdenes();
     } catch (error) {
@@ -176,6 +199,9 @@ async function cargarResultado(evento) {
     try {
         await api.enviarPut(`laboratorio/ordenes/${ordenSeleccionada.id}/resultado`, datos);
         mostrarAviso("Resultado cargado y aplicado al expediente.");
+        // Si este era el ultimo examen pendiente, la cita acaba de
+        // cerrar su bitacora y ya no debe aparecer en los select.
+        await cargarCitas();
         cerrarResultado();
         cargarOrdenes();
     } catch (error) {
@@ -242,6 +268,8 @@ async function registrarDespacho(evento) {
     try {
         await api.crear("farmacia/despachos", datos);
         mostrarAviso("Despacho registrado.");
+        // Con el despacho hecho la cita pudo cerrar su bitacora.
+        await cargarCitas();
         formDespacho.reset();
         cargarDespachos();
     } catch (error) {

@@ -45,16 +45,25 @@ public class FarmaciaController : ControllerBase
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        if (!await _repo.CitaExisteAsync(dto.CitaId))
+        var cita = await _repo.ObtenerEstadoAnexosAsync(dto.CitaId);
+        if (cita is null)
             return BadRequest(new { mensaje = $"La cita con Id {dto.CitaId} no existe." });
 
         // El medicamento lo receta el especialista. Despacharlo sin consulta
         // registrada equivale a entregar un farmaco que nadie indico.
-        if (!await _repo.CitaTieneDiagnosticoAsync(dto.CitaId))
+        if (!cita.TieneDiagnostico)
             return Conflict(new { mensaje = "La cita aun no tiene consulta registrada. El especialista debe valorar al residente antes de recetar medicamentos." });
 
-        if (await _repo.CitaLiquidadaAsync(dto.CitaId))
+        if (cita.Liquidada)
             return Conflict(new { mensaje = "Esta cita ya fue liquidada. No se pueden agregar cargos nuevos." });
+
+        // Misma regla que en laboratorio: solo se despacha lo que el
+        // especialista receto, y solo mientras la bitacora siga abierta.
+        if (!cita.RequiereFarmacia)
+            return Conflict(new { mensaje = "El especialista no receto medicamentos para esta cita." });
+
+        if (cita.Estado != 2)
+            return Conflict(new { mensaje = "La consulta de esta cita ya esta cerrada. Un medicamento posterior debe despacharse desde una remision nueva." });
 
         var despacho = new DespachoFarmacia
         {

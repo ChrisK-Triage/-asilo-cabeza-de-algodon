@@ -79,6 +79,21 @@ public class DespachoDto
     public DateTime FechaDespacho { get; set; }
 }
 
+/// <summary>
+/// Lo que necesito saber de una cita para decidir si todavia admite un
+/// examen o un medicamento. Lo traigo de un solo viaje en lugar de
+/// preguntar tres veces lo mismo a la base.
+/// </summary>
+public class EstadoAnexosDto
+{
+    public int CitaId { get; set; }
+    public byte Estado { get; set; }
+    public bool TieneDiagnostico { get; set; }
+    public bool RequiereLaboratorio { get; set; }
+    public bool RequiereFarmacia { get; set; }
+    public bool Liquidada { get; set; }
+}
+
 // Resumen de anexos de una cita, para saber cuanto lleva acumulado.
 public class ResumenAnexosDto
 {

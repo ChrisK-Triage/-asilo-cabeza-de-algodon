@@ -70,18 +70,51 @@ public class AnexoRepository : IAnexoRepository
         return await conexion.QuerySingleAsync<int>(sql, orden);
     }
 
+    /// <summary>
+    /// Carga el resultado y, en la misma transaccion, revisa si con este
+    /// examen la cita ya recibio todo lo que se le pidio. Van juntos a
+    /// proposito: si el resultado se guardara y el cierre fallara, la
+    /// cita quedaria esperando un examen que ya esta hecho, que es
+    /// exactamente el defecto que tenia el sistema antes.
+    /// </summary>
     public async Task<bool> CargarResultadoAsync(int id, string resultado, decimal costo)
     {
-        const string sql = @"
-            UPDATE OrdenesLaboratorio
-            SET Resultado      = @Resultado,
-                CostoBruto     = @Costo,
-                FechaResultado = GETDATE(),
-                Estado         = 1
-            WHERE Id = @Id;";
-
         using var conexion = _context.CreateConnection();
-        return await conexion.ExecuteAsync(sql, new { Id = id, Resultado = resultado, Costo = costo }) > 0;
+        conexion.Open();
+        using var transaccion = conexion.BeginTransaction();
+
+        try
+        {
+            const string sqlResultado = @"
+                UPDATE OrdenesLaboratorio
+                SET Resultado      = @Resultado,
+                    CostoBruto     = @Costo,
+                    FechaResultado = GETDATE(),
+                    Estado         = 1
+                WHERE Id = @Id;";
+
+            bool cargado = await conexion.ExecuteAsync(
+                sqlResultado,
+                new { Id = id, Resultado = resultado, Costo = costo },
+                transaccion) > 0;
+
+            if (cargado)
+            {
+                int citaId = await conexion.ExecuteScalarAsync<int>(
+                    "SELECT CitaId FROM OrdenesLaboratorio WHERE Id = @Id;",
+                    new { Id = id }, transaccion);
+
+                await conexion.ExecuteAsync(SqlCerrarBitacora, new { CitaId = citaId }, transaccion);
+            }
+
+            transaccion.Commit();
+            return cargado;
+        }
+        catch
+        {
+            transaccion.Rollback();
+            throw;
+        }
     }
 
     // ==================== FARMACIA ====================
@@ -119,17 +152,38 @@ public class AnexoRepository : IAnexoRepository
         return await conexion.QuerySingleOrDefaultAsync<DespachoDto>(sql, new { Id = id });
     }
 
+    /// <summary>
+    /// Registra el despacho y evalua el cierre de la bitacora en la
+    /// misma transaccion, por el mismo motivo que en laboratorio.
+    /// </summary>
     public async Task<int> CrearDespachoAsync(DespachoFarmacia despacho)
     {
         // No inserto CostoTotal: es columna calculada y SQL Server
         // la rechaza si intento escribirla.
-        const string sql = @"
+        const string sqlInsertar = @"
             INSERT INTO DespachosFarmacia (CitaId, Medicamento, Cantidad, TiempoAplicacion, CostoUnitario)
             VALUES (@CitaId, @Medicamento, @Cantidad, @TiempoAplicacion, @CostoUnitario);
             SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
         using var conexion = _context.CreateConnection();
-        return await conexion.QuerySingleAsync<int>(sql, despacho);
+        conexion.Open();
+        using var transaccion = conexion.BeginTransaction();
+
+        try
+        {
+            int id = await conexion.QuerySingleAsync<int>(sqlInsertar, despacho, transaccion);
+
+            await conexion.ExecuteAsync(
+                SqlCerrarBitacora, new { despacho.CitaId }, transaccion);
+
+            transaccion.Commit();
+            return id;
+        }
+        catch
+        {
+            transaccion.Rollback();
+            throw;
+        }
     }
 
     // ==================== COMUN ====================
@@ -174,6 +228,28 @@ public class AnexoRepository : IAnexoRepository
     }
 
     /// <summary>
+    /// Todo lo que necesito para decidir si una cita admite un anexo
+    /// nuevo, en una sola consulta. Devuelve null si la cita no existe.
+    /// </summary>
+    public async Task<EstadoAnexosDto?> ObtenerEstadoAnexosAsync(int citaId)
+    {
+        const string sql = @"
+            SELECT  Id AS CitaId,
+                    Estado,
+                    CASE WHEN Diagnostico IS NOT NULL
+                          AND LTRIM(RTRIM(Diagnostico)) <> ''
+                         THEN 1 ELSE 0 END AS TieneDiagnostico,
+                    RequiereLaboratorio,
+                    RequiereFarmacia,
+                    Liquidada
+            FROM CitasFundacion
+            WHERE Id = @CitaId;";
+
+        using var conexion = _context.CreateConnection();
+        return await conexion.QuerySingleOrDefaultAsync<EstadoAnexosDto>(sql, new { CitaId = citaId });
+    }
+
+    /// <summary>
     /// Un examen o un medicamento solo tienen sentido despues de que el
     /// especialista valoro al residente. Sin diagnostico registrado no hay
     /// quien los haya indicado, y el costo se le facturaria al familiar.
@@ -197,5 +273,42 @@ public class AnexoRepository : IAnexoRepository
 
         using var conexion = _context.CreateConnection();
         return await conexion.ExecuteScalarAsync<bool>(sql, new { CitaId = citaId });
+    }
+
+    // ==================== CIERRE DE LA BITACORA ====================
+
+    /// <summary>
+    /// La transicion EsperandoAnexos -> BitacoraCompletada del diagrama
+    /// de estados. Antes no la ejecutaba nadie y la cita se quedaba
+    /// atrapada para siempre.
+    ///
+    /// El criterio: cierra cuando cada destino que el especialista
+    /// solicito ya tiene su registro, y ninguna orden de laboratorio
+    /// quedo pendiente de resultado. Lo que no se pidio no se espera.
+    ///
+    /// Va todo en el WHERE y no en codigo C# para que la decision y la
+    /// escritura ocurran en la misma sentencia: si entre consultar y
+    /// actualizar entrara otra orden, el estado podria quedar mal.
+    /// El UPDATE no hace nada si la cita no esta en estado 2, asi que
+    /// llamarlo de mas es inofensivo.
+    /// </summary>
+    private const string SqlCerrarBitacora = @"
+        UPDATE CitasFundacion
+        SET Estado = 3
+        WHERE Id = @CitaId
+          AND Estado = 2
+          AND (RequiereLaboratorio = 0
+               OR (    EXISTS (SELECT 1 FROM OrdenesLaboratorio o
+                                WHERE o.CitaId = @CitaId)
+                   AND NOT EXISTS (SELECT 1 FROM OrdenesLaboratorio o
+                                    WHERE o.CitaId = @CitaId AND o.Estado = 0)))
+          AND (RequiereFarmacia = 0
+               OR EXISTS (SELECT 1 FROM DespachosFarmacia d
+                           WHERE d.CitaId = @CitaId));";
+
+    public async Task<bool> CerrarBitacoraSiCompletaAsync(int citaId)
+    {
+        using var conexion = _context.CreateConnection();
+        return await conexion.ExecuteAsync(SqlCerrarBitacora, new { CitaId = citaId }) > 0;
     }
 }

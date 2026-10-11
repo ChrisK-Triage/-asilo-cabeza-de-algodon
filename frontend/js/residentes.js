@@ -6,19 +6,24 @@ let residentes = [];
 
 const form = document.getElementById("form-residente");
 const cuerpoTabla = document.getElementById("cuerpo-tabla");
+const paginador = new Paginador("paginador-residentes", () => pintarTabla());
 
 document.addEventListener("DOMContentLoaded", cargar);
 form.addEventListener("submit", guardar);
-document.getElementById("buscar").addEventListener("input", pintarTabla);
+document.getElementById("buscar").addEventListener("input", () => {
+    // Cada busqueda empieza en la primera pagina.
+    paginador.reiniciar();
+    pintarTabla();
+});
 
 async function cargar() {
-    cuerpoTabla.innerHTML = `<tr><td colspan="6" class="vacio">Cargando…</td></tr>`;
+    cuerpoTabla.innerHTML = `<tr><td colspan="7" class="vacio">Cargando…</td></tr>`;
 
     try {
         residentes = await api.listar("residentes");
         pintarTabla();
     } catch (error) {
-        cuerpoTabla.innerHTML = `<tr><td colspan="6" class="vacio">${limpiar(error.message)}</td></tr>`;
+        cuerpoTabla.innerHTML = `<tr><td colspan="7" class="vacio">${limpiar(error.message)}</td></tr>`;
         document.getElementById("conteo").textContent = "";
     }
 }
@@ -33,18 +38,19 @@ function pintarTabla() {
         `${lista.length} ${lista.length === 1 ? "residente activo" : "residentes activos"}`;
 
     if (lista.length === 0) {
-        cuerpoTabla.innerHTML = `<tr><td colspan="6" class="vacio">
+        cuerpoTabla.innerHTML = `<tr><td colspan="7" class="vacio">
             ${filtro ? "Ningun residente coincide con la busqueda." : "Aun no hay residentes registrados."}
         </td></tr>`;
         return;
     }
 
-    cuerpoTabla.innerHTML = lista.map(r => `
+    cuerpoTabla.innerHTML = paginador.recortar(lista).map(r => `
         <tr>
             <td>
                 ${limpiar(r.nombres)} ${limpiar(r.apellidos)}
                 <div class="secundario">${limpiar(r.psicopatologias) || "Sin diagnostico previo"}</div>
             </td>
+            <td class="dpi">${limpiar(r.dpi) || "<span class='secundario'>Sin DPI</span>"}</td>
             <td class="num">${r.edad}</td>
             <td>${fecha(r.fechaIngreso)}</td>
             <td class="num">${r.totalFamiliares}</td>
@@ -53,8 +59,8 @@ function pintarTabla() {
             </span></td>
             <td class="der">
                 <button class="btn-fila" onclick="abrirFamiliares(${r.id})">Familiares</button>
-                <a class="btn-fila" href="crear-remision.html?residente=${r.id}">Crear remision</a>
-                <button class="btn-fila peligro" onclick="darDeBaja(${r.id})">Dar de baja</button>
+                <a class="btn-fila" href="crear-remision.html?residente=${r.id}">Remitir</a>
+                <button class="btn-fila peligro" onclick="darDeBaja(${r.id})">Baja</button>
             </td>
         </tr>
     `).join("");
@@ -66,6 +72,7 @@ async function guardar(evento) {
     const datos = {
         nombres: form.nombres.value.trim(),
         apellidos: form.apellidos.value.trim(),
+        dpi: form.dpi.value.trim() || null,
         fechaNacimiento: form.fechaNacimiento.value,
         psicopatologias: form.psicopatologias.value.trim() || null,
         medicamentosCajon: form.medicamentosCajon.value.trim() || null

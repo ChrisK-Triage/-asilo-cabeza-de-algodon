@@ -19,11 +19,12 @@ public class CitaRepository : ICitaRepository
                 c.RemisionId,
                 rem.ResidenteId,
                 r.Nombres + ' ' + r.Apellidos  AS ResidenteNombre,
-                rem.EspecialidadSolicitada,
+                rem.EspecialidadId,
+                esp.Nombre                     AS EspecialidadSolicitada,
                 rem.Sintomatologia,
                 c.EspecialistaId,
                 u.NombreCompleto               AS EspecialistaNombre,
-                u.Especialidad                 AS EspecialistaEspecialidad,
+                espU.Nombre                    AS EspecialistaEspecialidad,
                 c.BloqueHorario,
                 c.Diagnostico,
                 c.CostoConsulta,
@@ -33,11 +34,15 @@ public class CitaRepository : ICitaRepository
                      WHEN 2 THEN 'Esperando anexos'
                      WHEN 3 THEN 'Bitacora completada'
                      ELSE 'Costos calculados' END AS Estado,
-                c.Liquidada
+                c.Liquidada,
+                c.RequiereLaboratorio,
+                c.RequiereFarmacia
         FROM CitasFundacion c
-        INNER JOIN Remisiones rem ON rem.Id = c.RemisionId
-        INNER JOIN Residentes r   ON r.Id   = rem.ResidenteId
-        INNER JOIN Usuarios   u   ON u.Id   = c.EspecialistaId";
+        INNER JOIN Remisiones     rem  ON rem.Id  = c.RemisionId
+        INNER JOIN Residentes     r    ON r.Id    = rem.ResidenteId
+        INNER JOIN Usuarios       u    ON u.Id    = c.EspecialistaId
+        INNER JOIN Especialidades esp  ON esp.Id  = rem.EspecialidadId
+        LEFT  JOIN Especialidades espU ON espU.Id = u.EspecialidadId";
 
     public async Task<IEnumerable<CitaDto>> ObtenerTodasAsync(EstadoCita? estado, int? especialistaId)
     {
@@ -100,28 +105,50 @@ public class CitaRepository : ICitaRepository
         }
     }
 
-    public async Task<bool> RegistrarDiagnosticoAsync(int id, string diagnostico, bool requiereAnexos)
+    /// <summary>
+    /// Asienta el diagnostico y deja escrito que indico el especialista.
+    /// Guardar las dos banderas es lo que permite despues saber cuando
+    /// la bitacora quedo completa: antes el dato se usaba para elegir el
+    /// estado y se descartaba, y la cita se quedaba esperando algo que
+    /// nadie sabia que era.
+    /// </summary>
+    public async Task<bool> RegistrarDiagnosticoAsync(
+        int id, string diagnostico, bool requiereLaboratorio, bool requiereFarmacia)
     {
-        // 2 = EsperandoAnexos, 3 = BitacoraCompletada
-        byte nuevoEstado = requiereAnexos ? (byte)2 : (byte)3;
+        // 2 = EsperandoAnexos, 3 = BitacoraCompletada.
+        // Sin anexos solicitados la consulta cierra en el acto.
+        byte nuevoEstado = (requiereLaboratorio || requiereFarmacia) ? (byte)2 : (byte)3;
 
         const string sql = @"
             UPDATE CitasFundacion
-            SET Diagnostico = @Diagnostico,
-                Estado      = @Estado
+            SET Diagnostico         = @Diagnostico,
+                Estado              = @Estado,
+                RequiereLaboratorio = @RequiereLaboratorio,
+                RequiereFarmacia    = @RequiereFarmacia
             WHERE Id = @Id;";
 
         using var conexion = _context.CreateConnection();
-        return await conexion.ExecuteAsync(sql, new { Id = id, Diagnostico = diagnostico, Estado = nuevoEstado }) > 0;
+        return await conexion.ExecuteAsync(sql, new
+        {
+            Id = id,
+            Diagnostico = diagnostico,
+            Estado = nuevoEstado,
+            RequiereLaboratorio = requiereLaboratorio,
+            RequiereFarmacia = requiereFarmacia
+        }) > 0;
     }
 
     public async Task<IEnumerable<EspecialistaDto>> ObtenerEspecialistasAsync()
     {
         const string sql = @"
-            SELECT Id, NombreCompleto, Especialidad
-            FROM Usuarios
-            WHERE Rol = 'Especialista' AND Activo = 1
-            ORDER BY Especialidad, NombreCompleto;";
+            SELECT  u.Id,
+                    u.NombreCompleto,
+                    u.EspecialidadId,
+                    e.Nombre AS Especialidad
+            FROM Usuarios u
+            INNER JOIN Especialidades e ON e.Id = u.EspecialidadId
+            WHERE u.Rol = 'Especialista' AND u.Activo = 1
+            ORDER BY e.Nombre, u.NombreCompleto;";
 
         using var conexion = _context.CreateConnection();
         return await conexion.QueryAsync<EspecialistaDto>(sql);

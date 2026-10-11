@@ -19,6 +19,15 @@ public interface IAnexoRepository
     // Comun
     Task<ResumenAnexosDto?> ObtenerResumenAsync(int citaId);
     Task<bool> CitaExisteAsync(int citaId);
+
+    // Estado de la cita frente a los anexos: si existe, si tiene
+    // diagnostico, que se le indico y si ya se cobro.
+    Task<EstadoAnexosDto?> ObtenerEstadoAnexosAsync(int citaId);
     Task<bool> CitaTieneDiagnosticoAsync(int citaId);
     Task<bool> CitaLiquidadaAsync(int citaId);
+
+    // Evalua si la cita ya recibio todo lo que el especialista le pidio
+    // y, en ese caso, la pasa a BitacoraCompletada. Devuelve true solo
+    // cuando efectivamente la cerro.
+    Task<bool> CerrarBitacoraSiCompletaAsync(int citaId);
 }

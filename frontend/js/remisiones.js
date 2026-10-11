@@ -4,16 +4,28 @@
 // =====================================================================
 
 let remisiones = [];
+let especialidades = [];
 
 const form = document.getElementById("form-remision");
 const cuerpoTabla = document.getElementById("cuerpo-tabla");
+const paginador = new Paginador("paginador-remisiones", () => pintarTabla());
 
 document.addEventListener("DOMContentLoaded", iniciar);
 form.addEventListener("submit", guardar);
-document.getElementById("filtro-estado").addEventListener("change", cargarRemisiones);
+form.especialidadId.addEventListener("change", revisarCobertura);
+document.getElementById("filtro-estado").addEventListener("change", () => {
+    // Al cambiar el filtro vuelvo a la primera pagina: si estoy en la
+    // cuarta y el filtro deja tres filas, la tabla saldria vacia.
+    paginador.reiniciar();
+    cargarRemisiones();
+});
 
 async function iniciar() {
-    await cargarResidentes();
+    // allSettled y no all: si un catalogo falla quiero que los demas y
+    // la tabla carguen igual. Con Promise.all, un solo fallo cortaba la
+    // funcion y la pantalla quedaba completamente en blanco, sin tabla
+    // y sin ningun mensaje que explicara por que.
+    await Promise.allSettled([cargarResidentes(), cargarEspecialidades(), cargarEnfermeros()]);
     await cargarRemisiones();
 }
 
@@ -36,6 +48,83 @@ async function cargarResidentes() {
         if (preseleccion) form.residenteId.value = preseleccion;
 
     } catch (error) {
+        mostrarAviso(error.message, "error");
+    }
+}
+
+// Las especialidades salen de la tabla Especialidades, no de una lista
+// escrita en el HTML ni deducidas de quien las atiende.
+//
+// Ofrezco todas, incluso las que no tienen especialista activo, pero
+// marcadas. La necesidad clinica del residente es valida aunque la
+// fundacion no la cubra hoy: ocultarla borraria esa necesidad del
+// sistema. Lo que si hago es advertirlo antes de emitir.
+async function cargarEspecialidades() {
+    let select;
+
+    try {
+        // La busqueda del elemento va dentro del try: si el id cambia en
+        // el HTML, el catch ya no puede escribir en un undefined.
+        select = form.especialidadId;
+        especialidades = await api.listar("catalogos/especialidades");
+
+        if (especialidades.length === 0) {
+            select.innerHTML = `<option value="">No hay especialidades en el catálogo</option>`;
+            select.disabled = true;
+            return;
+        }
+
+        select.disabled = false;
+        select.innerHTML =
+            `<option value="">Selecciona una especialidad</option>` +
+            especialidades.map(e =>
+                `<option value="${e.id}">${limpiar(e.nombre)}${e.tieneCobertura ? "" : " — sin cobertura"}</option>`
+            ).join("");
+
+    } catch (error) {
+        if (select) select.innerHTML = `<option value="">No se pudo cargar el catálogo</option>`;
+        mostrarAviso(error.message, "error");
+    }
+}
+
+// Aviso bajo el select: el medico tiene que saber, antes de emitir, que
+// esa remision va a quedar esperando hasta que haya quien la atienda.
+function revisarCobertura() {
+    const nota = document.getElementById("aviso-cobertura");
+    const elegida = especialidades.find(e => e.id === Number(form.especialidadId.value));
+
+    if (!elegida) {
+        nota.textContent = "Catálogo de especialidades";
+        nota.classList.remove("ayuda-alerta");
+        return;
+    }
+
+    if (elegida.tieneCobertura) {
+        nota.textContent = elegida.especialistasActivos === 1
+            ? "1 especialista disponible"
+            : `${elegida.especialistasActivos} especialistas disponibles`;
+        nota.classList.remove("ayuda-alerta");
+    } else {
+        nota.textContent =
+            "La fundación no tiene especialista de esta especialidad. " +
+            "La remisión queda pendiente hasta que haya uno.";
+        nota.classList.add("ayuda-alerta");
+    }
+}
+
+async function cargarEnfermeros() {
+    let select;
+
+    try {
+        select = form.enfermeroId;
+        const enfermeros = await api.listar("catalogos/enfermeros");
+
+        select.innerHTML =
+            `<option value="">Sin asignar</option>` +
+            enfermeros.map(e => `<option value="${e.id}">${limpiar(e.nombre)}</option>`).join("");
+
+    } catch (error) {
+        if (select) select.innerHTML = `<option value="">No se pudo cargar el catálogo</option>`;
         mostrarAviso(error.message, "error");
     }
 }
@@ -65,7 +154,7 @@ function pintarTabla() {
         return;
     }
 
-    cuerpoTabla.innerHTML = remisiones.map(r => `
+    cuerpoTabla.innerHTML = paginador.recortar(remisiones).map(r => `
         <tr>
             <td>
                 ${limpiar(r.residenteNombre)}
@@ -116,14 +205,16 @@ async function guardar(evento) {
         // saldra del token JWT y no de un valor fijo.
         medicoGeneralId: 2,
         sintomatologia: form.sintomatologia.value.trim(),
-        especialidadSolicitada: form.especialidadSolicitada.value,
-        enfermeroAsignado: form.enfermeroAsignado.value.trim() || null
+        especialidadId: Number(form.especialidadId.value),
+        // Sin asignar queda en null: el enfermero es opcional.
+        enfermeroId: form.enfermeroId.value ? Number(form.enfermeroId.value) : null
     };
 
     try {
         await api.crear("remisiones", datos);
         mostrarAviso("Remision emitida correctamente.");
         form.reset();
+        revisarCobertura();
         cargarRemisiones();
     } catch (error) {
         mostrarAviso(error.message, "error");

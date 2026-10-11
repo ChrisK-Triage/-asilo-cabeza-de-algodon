@@ -29,7 +29,8 @@
   <div class="grupo-nav">Fundación</div>
   <a href="consola-fundacion.html">Asignación de citas</a>
   <div class="grupo-nav">Exámenes y medicamentos</div>
-  <a href="panel-laboratorio.html">Laboratorio y farmacia</a>
+  <a href="panel-laboratorio.html">Laboratorio</a>
+  <a href="panel-farmacia.html">Farmacia</a>
   <div class="grupo-nav">Sesión</div>
   <a href="login.html">Cerrar sesión</a>
 </aside>
@@ -53,6 +54,12 @@
           <div class="campo">
             <label for="apellidos">Apellidos</label>
             <input id="apellidos" name="apellidos" maxlength="100" required placeholder="Méndez">
+          </div>
+          <div class="campo">
+            <label for="dpi">DPI</label>
+            <input id="dpi" name="dpi" maxlength="13" inputmode="numeric"
+                   pattern="\d{13}" placeholder="2451098760101">
+            <span class="ayuda">13 dígitos, sin espacios ni guiones</span>
           </div>
           <div class="campo">
             <label for="fechaNacimiento">Fecha de nacimiento</label>
@@ -87,12 +94,13 @@
     <table>
       <thead>
         <tr>
-          <th>Residente</th><th class="num">Edad</th><th>Ingreso</th>
+          <th>Residente</th><th>DPI</th><th class="num">Edad</th><th>Ingreso</th>
           <th class="num">Familiares</th><th>Estado</th><th></th>
         </tr>
       </thead>
       <tbody id="cuerpo-tabla"></tbody>
     </table>
+    <div class="paginador" id="paginador-residentes"></div>
   </div>
 
   <!-- Panel de contactos. Arranca oculto y se abre desde la accion
@@ -109,6 +117,11 @@
           <div class="campo">
             <label for="fam-nombre">Nombre del contacto</label>
             <input id="fam-nombre" name="nombre" maxlength="150" required placeholder="María Méndez">
+          </div>
+          <div class="campo">
+            <label for="fam-dpi">DPI</label>
+            <input id="fam-dpi" name="dpi" maxlength="13" inputmode="numeric"
+                   pattern="\d{13}" placeholder="2451098760101">
           </div>
           <div class="campo">
             <label for="fam-email">Correo</label>
@@ -129,7 +142,7 @@
     </div>
     <table>
       <thead>
-        <tr><th>Contacto</th><th>Correo</th><th>Teléfono</th><th></th></tr>
+        <tr><th>Contacto</th><th>DPI</th><th>Correo</th><th>Teléfono</th><th></th></tr>
       </thead>
       <tbody id="cuerpo-familiares"></tbody>
     </table>

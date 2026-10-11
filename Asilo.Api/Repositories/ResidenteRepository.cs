@@ -22,6 +22,7 @@ public class ResidenteRepository : IResidenteRepository
             SELECT  r.Id,
                     r.Nombres,
                     r.Apellidos,
+                r.Dpi,
                     r.FechaNacimiento,
                     DATEDIFF(YEAR, r.FechaNacimiento, GETDATE())
                       - CASE WHEN DATEADD(YEAR, DATEDIFF(YEAR, r.FechaNacimiento, GETDATE()),
@@ -47,6 +48,7 @@ public class ResidenteRepository : IResidenteRepository
             SELECT  r.Id,
                     r.Nombres,
                     r.Apellidos,
+                    r.Dpi,
                     r.FechaNacimiento,
                     DATEDIFF(YEAR, r.FechaNacimiento, GETDATE())
                       - CASE WHEN DATEADD(YEAR, DATEDIFF(YEAR, r.FechaNacimiento, GETDATE()),
@@ -69,9 +71,9 @@ public class ResidenteRepository : IResidenteRepository
     {
         // SCOPE_IDENTITY devuelve el Id que SQL Server acaba de generar.
         const string sql = @"
-            INSERT INTO Residentes (Nombres, Apellidos, FechaNacimiento,
+            INSERT INTO Residentes (Nombres, Apellidos, Dpi, FechaNacimiento,
                                     Psicopatologias, MedicamentosCajon, Activo)
-            VALUES (@Nombres, @Apellidos, @FechaNacimiento,
+            VALUES (@Nombres, @Apellidos, @Dpi, @FechaNacimiento,
                     @Psicopatologias, @MedicamentosCajon, 1);
             SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
@@ -85,6 +87,7 @@ public class ResidenteRepository : IResidenteRepository
             UPDATE Residentes
             SET Nombres           = @Nombres,
                 Apellidos         = @Apellidos,
+                Dpi               = @Dpi,
                 FechaNacimiento   = @FechaNacimiento,
                 Psicopatologias   = @Psicopatologias,
                 MedicamentosCajon = @MedicamentosCajon

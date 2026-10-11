@@ -47,18 +47,33 @@ public class LaboratorioController : ControllerBase
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        if (!await _repo.CitaExisteAsync(dto.CitaId))
+        // Una sola consulta en lugar de tres: necesito el estado completo
+        // de la cita para decidir si todavia admite un examen.
+        var cita = await _repo.ObtenerEstadoAnexosAsync(dto.CitaId);
+        if (cita is null)
             return BadRequest(new { mensaje = $"La cita con Id {dto.CitaId} no existe." });
 
         // El examen lo indica el especialista durante la consulta. Sin
         // diagnostico registrado no hubo valoracion que lo justifique.
-        if (!await _repo.CitaTieneDiagnosticoAsync(dto.CitaId))
+        if (!cita.TieneDiagnostico)
             return Conflict(new { mensaje = "La cita aun no tiene consulta registrada. El especialista debe valorar al residente antes de solicitar examenes." });
 
         // Si la cita ya se cobro, agregarle cargos la dejaria con un total
         // distinto al que se le facturo al familiar.
-        if (await _repo.CitaLiquidadaAsync(dto.CitaId))
+        if (cita.Liquidada)
             return Conflict(new { mensaje = "Esta cita ya fue liquidada. No se pueden agregar cargos nuevos." });
+
+        // El especialista no pidio laboratorio en esta cita. Un examen que
+        // nadie indico no tiene quien lo respalde, y el costo igual se le
+        // facturaria al familiar.
+        if (!cita.RequiereLaboratorio)
+            return Conflict(new { mensaje = "El especialista no indico examenes de laboratorio para esta cita." });
+
+        // 2 = EsperandoAnexos. Con la bitacora ya cerrada, la consulta
+        // quedo asentada como completa: agregarle un examen despues
+        // modificaria un expediente terminado y un total ya calculado.
+        if (cita.Estado != 2)
+            return Conflict(new { mensaje = "La consulta de esta cita ya esta cerrada. Un examen posterior debe solicitarse desde una remision nueva." });
 
         var orden = new OrdenLaboratorio
         {

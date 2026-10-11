@@ -77,11 +77,26 @@ public class CitasController : ControllerBase
         if (especialista is null)
             return BadRequest(new { mensaje = $"El especialista con Id {dto.EspecialistaId} no existe o no esta activo." });
 
-        // 5. Choque de horario. Es la excepcion A1 del caso de uso CU-02.
+        // 5. La especialidad del especialista debe ser la que pidio el
+        //    medico general. Un cardiologo atendiendo una remision de
+        //    neurologia invalida la consulta y el cobro que sale de ella.
+        //
+        //    Ahora es una comparacion de enteros. Antes habia que
+        //    comparar dos cadenas quitando tildes y mayusculas, porque
+        //    la especialidad era texto libre en dos tablas distintas;
+        //    con el catalogo, o es el mismo Id o no lo es.
+        if (especialista.EspecialidadId != remision.EspecialidadId)
+            return Conflict(new
+            {
+                mensaje = $"{especialista.NombreCompleto} es de {especialista.Especialidad}, " +
+                          $"y la remision solicita {remision.EspecialidadSolicitada}."
+            });
+
+        // 6. Choque de horario. Es la excepcion A1 del caso de uso CU-02.
         if (await _repo.HorarioOcupadoAsync(dto.EspecialistaId, dto.BloqueHorario))
             return Conflict(new { mensaje = $"{especialista.NombreCompleto} ya tiene una cita asignada en ese horario." });
 
-        // 6. La cita no puede agendarse en el pasado
+        // 7. La cita no puede agendarse en el pasado
         if (dto.BloqueHorario < DateTime.Now)
             return BadRequest(new { mensaje = "El bloque horario no puede ser anterior a la fecha actual." });
 
@@ -122,7 +137,10 @@ public class CitasController : ControllerBase
         if (!string.IsNullOrWhiteSpace(cita.Diagnostico))
             return Conflict(new { mensaje = "Esta cita ya tiene un diagnostico registrado. Una correccion debe asentarse como nota nueva." });
 
-        await _repo.RegistrarDiagnosticoAsync(id, dto.Diagnostico.Trim(), dto.RequiereAnexos);
+        await _repo.RegistrarDiagnosticoAsync(
+            id, dto.Diagnostico.Trim(), dto.RequiereLaboratorio, dto.RequiereFarmacia);
+
         return NoContent();
     }
+
 }

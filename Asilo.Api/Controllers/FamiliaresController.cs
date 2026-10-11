@@ -68,6 +68,7 @@ public class FamiliaresController : ControllerBase
         {
             ResidenteId = dto.ResidenteId,
             Nombre = dto.Nombre.Trim(),
+            Dpi = string.IsNullOrWhiteSpace(dto.Dpi) ? null : dto.Dpi.Trim(),
             Email = dto.Email.Trim(),
             Telefono = string.IsNullOrWhiteSpace(dto.Telefono) ? null : dto.Telefono.Trim()
         };
@@ -98,6 +99,7 @@ public class FamiliaresController : ControllerBase
             return Conflict(new { mensaje = "Ese correo ya esta registrado como contacto de este residente." });
 
         dto.Nombre = dto.Nombre.Trim();
+        dto.Dpi = string.IsNullOrWhiteSpace(dto.Dpi) ? null : dto.Dpi.Trim();
         dto.Email = dto.Email.Trim();
         dto.Telefono = string.IsNullOrWhiteSpace(dto.Telefono) ? null : dto.Telefono.Trim();
 

@@ -16,6 +16,12 @@ public class ResidenteCreateDto
     [Required(ErrorMessage = "La fecha de nacimiento es obligatoria.")]
     public DateTime FechaNacimiento { get; set; }
 
+    // Trece digitos exactos: es el formato del DPI guatemalteco.
+    // Opcional porque los registros que ya existen no lo tienen y
+    // rellenarlo con un valor inventado seria peor que dejarlo vacio.
+    [RegularExpression(@"^\d{13}$", ErrorMessage = "El DPI debe tener exactamente 13 digitos.")]
+    public string? Dpi { get; set; }
+
     public string? Psicopatologias { get; set; }
     public string? MedicamentosCajon { get; set; }
 }
@@ -27,6 +33,7 @@ public class ResidenteDto
     public int Id { get; set; }
     public string Nombres { get; set; } = string.Empty;
     public string Apellidos { get; set; } = string.Empty;
+    public string? Dpi { get; set; }
     public DateTime FechaNacimiento { get; set; }
     public int Edad { get; set; }
     public string? Psicopatologias { get; set; }

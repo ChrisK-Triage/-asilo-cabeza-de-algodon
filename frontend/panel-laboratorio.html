@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Laboratorio y farmacia · Asilo Cabeza de Algodón</title>
+<title>Laboratorio · Asilo Cabeza de Algodón</title>
 <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
@@ -19,7 +19,7 @@
   <a class="marca-logo" href="panel-clinico.html">
     <img src="img/logo-cabeza-de-algodon-oscuro.svg" alt="Asilo Cabeza de Algodón">
   </a>
-  <div class="usuario"><strong>Tec. Byron Calderón</strong>Laboratorio y farmacia</div>
+  <div class="usuario"><strong>Tec. Byron Calderón</strong>Laboratorio</div>
 </div></header>
 <div class="cuerpo">
 <aside>
@@ -29,18 +29,17 @@
   <div class="grupo-nav">Fundación</div>
   <a href="consola-fundacion.html">Asignación de citas</a>
   <div class="grupo-nav">Exámenes y medicamentos</div>
-  <a href="panel-laboratorio.html">Laboratorio y farmacia</a>
+  <a href="panel-laboratorio.html">Laboratorio</a>
+  <a href="panel-farmacia.html">Farmacia</a>
   <div class="grupo-nav">Sesión</div>
   <a href="login.html">Cerrar sesión</a>
 </aside>
 <main>
   <div class="titulo-pagina">
-    <h1>Laboratorio y farmacia</h1>
+    <h1>Laboratorio</h1>
   </div>
 
   <div class="aviso" id="aviso"></div>
-
-  <h2>Laboratorio</h2>
 
   <div class="panel">
     <div class="panel-cuerpo">
@@ -49,7 +48,7 @@
           <div class="campo">
             <label for="citaId">Cita asociada</label>
             <select id="citaId" name="citaId" required></select>
-            <span class="ayuda">Solo se muestran citas no liquidadas</span>
+            <span class="ayuda">Solo aparecen las citas en las que el especialista indicó exámenes</span>
           </div>
           <div class="campo">
             <label for="tipoExamen">Examen solicitado</label>
@@ -88,6 +87,7 @@
       </thead>
       <tbody id="cuerpo-ordenes"></tbody>
     </table>
+    <div class="paginador" id="paginador-ordenes"></div>
   </div>
 
   <div class="panel" id="panel-resultado" style="display:none">
@@ -117,65 +117,9 @@
       </form>
     </div>
   </div>
-
-  <h2 style="margin-top:32px">Farmacia</h2>
-
-  <div class="panel">
-    <div class="panel-cuerpo">
-      <form id="form-despacho">
-        <div class="rejilla">
-          <div class="campo">
-            <label for="citaIdFarmacia">Cita asociada</label>
-            <select id="citaIdFarmacia" name="citaId" required></select>
-          </div>
-          <div class="campo">
-            <label for="medicamento">Medicamento</label>
-            <input id="medicamento" name="medicamento" maxlength="150" required placeholder="Donepezilo 10 mg">
-          </div>
-          <div class="campo">
-            <label for="cantidad">Cantidad</label>
-            <input type="number" id="cantidad" name="cantidad" min="1" max="10000" required placeholder="30">
-          </div>
-          <div class="campo">
-            <label for="costoUnitario">Costo unitario (Q)</label>
-            <input type="number" id="costoUnitario" name="costoUnitario" min="0" step="0.01" required placeholder="8.00">
-          </div>
-          <div class="campo">
-            <label for="tiempoAplicacion">Tiempo de aplicación</label>
-            <input id="tiempoAplicacion" name="tiempoAplicacion" maxlength="100" placeholder="1 tableta cada 24 horas">
-          </div>
-          <div class="campo">
-            <label>Costo total</label>
-            <div style="font-size:19px;font-weight:600;padding:8px 0" id="vista-total">Q 0.00</div>
-                      </div>
-        </div>
-        <div class="acciones">
-          <button type="submit" class="btn-principal">Registrar despacho</button>
-          <button type="reset" class="btn-secundario">Limpiar</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="titulo-pagina">
-    <h2 style="margin:0">Despachos registrados</h2>
-    <span class="conteo" id="conteo-despachos"></span>
-  </div>
-
-  <div class="panel">
-    <table>
-      <thead>
-        <tr>
-          <th>Residente</th><th>Medicamento</th>
-          <th class="num">Cantidad</th><th class="num">Unitario</th><th class="num">Total</th>
-        </tr>
-      </thead>
-      <tbody id="cuerpo-despachos"></tbody>
-    </table>
-  </div>
 </main>
 </div>
 <script src="js/api.js"></script>
-<script src="js/anexos.js"></script>
+<script src="js/laboratorio.js"></script>
 </body>
 </html>

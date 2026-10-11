@@ -42,20 +42,20 @@ function cerrarFamiliares() {
 }
 
 async function cargarFamiliares() {
-    cuerpoFamiliares.innerHTML = `<tr><td colspan="4" class="vacio">Cargando…</td></tr>`;
+    cuerpoFamiliares.innerHTML = `<tr><td colspan="5" class="vacio">Cargando…</td></tr>`;
 
     try {
         familiares = await api.listar(`familiares/residente/${residenteAbierto}`);
         pintarFamiliares();
     } catch (error) {
         cuerpoFamiliares.innerHTML =
-            `<tr><td colspan="4" class="vacio">${limpiar(error.message)}</td></tr>`;
+            `<tr><td colspan="5" class="vacio">${limpiar(error.message)}</td></tr>`;
     }
 }
 
 function pintarFamiliares() {
     if (familiares.length === 0) {
-        cuerpoFamiliares.innerHTML = `<tr><td colspan="4" class="vacio">
+        cuerpoFamiliares.innerHTML = `<tr><td colspan="5" class="vacio">
             Este residente no tiene contactos registrados. Sin al menos uno
             no hay a quien avisarle de las citas ni a quien facturarle.
         </td></tr>`;
@@ -65,6 +65,7 @@ function pintarFamiliares() {
     cuerpoFamiliares.innerHTML = familiares.map(f => `
         <tr>
             <td>${limpiar(f.nombre)}</td>
+            <td>${limpiar(f.dpi) || "<span class='secundario'>—</span>"}</td>
             <td>${limpiar(f.email)}</td>
             <td>${limpiar(f.telefono) || "—"}</td>
             <td class="der">
@@ -81,6 +82,7 @@ function editarFamiliar(id) {
 
     familiarEnEdicion = id;
     formFamiliar.nombre.value = f.nombre;
+    formFamiliar.dpi.value = f.dpi ?? "";
     formFamiliar.email.value = f.email;
     formFamiliar.telefono.value = f.telefono ?? "";
     document.getElementById("btn-guardar-familiar").textContent = "Guardar cambios";
@@ -99,6 +101,7 @@ async function guardarFamiliar(evento) {
 
     const datos = {
         nombre: formFamiliar.nombre.value.trim(),
+        dpi: formFamiliar.dpi.value.trim() || null,
         email: formFamiliar.email.value.trim(),
         telefono: formFamiliar.telefono.value.trim() || null
     };

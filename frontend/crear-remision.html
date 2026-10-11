@@ -29,7 +29,8 @@
   <div class="grupo-nav">Fundación</div>
   <a href="consola-fundacion.html">Asignación de citas</a>
   <div class="grupo-nav">Exámenes y medicamentos</div>
-  <a href="panel-laboratorio.html">Laboratorio y farmacia</a>
+  <a href="panel-laboratorio.html">Laboratorio</a>
+  <a href="panel-farmacia.html">Farmacia</a>
   <div class="grupo-nav">Sesión</div>
   <a href="login.html">Cerrar sesión</a>
 </aside>
@@ -52,20 +53,18 @@
             <span class="ayuda">Catálogo alimentado desde la base de datos</span>
           </div>
           <div class="campo">
-            <label for="especialidadSolicitada">Especialidad requerida</label>
-            <select id="especialidadSolicitada" name="especialidadSolicitada" required>
-              <option value="">Selecciona una especialidad</option>
-              <option>Neurología</option>
-              <option>Cardiología</option>
-              <option>Traumatología</option>
-              <option>Oftalmología</option>
-              <option>Medicina interna</option>
-              <option>Geriatría</option>
-            </select>
+            <label for="especialidadId">Especialidad requerida</label>
+            <!-- Sin opciones escritas a mano: las llena remisiones.js desde
+                 la tabla Especialidades. Las que no tienen especialista
+                 activo se ofrecen igual pero marcadas: la necesidad clinica
+                 del residente es valida aunque la fundacion no la cubra hoy. -->
+            <select id="especialidadId" name="especialidadId" required></select>
+            <span class="ayuda" id="aviso-cobertura">Catálogo de especialidades</span>
           </div>
           <div class="campo">
-            <label for="enfermeroAsignado">Enfermero responsable del traslado</label>
-            <input id="enfermeroAsignado" name="enfermeroAsignado" maxlength="100" placeholder="Karla Jiménez">
+            <label for="enfermeroId">Enfermero responsable del traslado</label>
+            <select id="enfermeroId" name="enfermeroId"></select>
+            <span class="ayuda">Opcional, del catálogo de enfermeros</span>
           </div>
         </div>
         <div class="campo" style="margin-top:14px">
@@ -103,6 +102,7 @@
       </thead>
       <tbody id="cuerpo-tabla"></tbody>
     </table>
+    <div class="paginador" id="paginador-remisiones"></div>
   </div>
 </main>
 </div>

@@ -50,6 +50,7 @@ public class ResidentesController : ControllerBase
         {
             Nombres = dto.Nombres.Trim(),
             Apellidos = dto.Apellidos.Trim(),
+            Dpi = string.IsNullOrWhiteSpace(dto.Dpi) ? null : dto.Dpi.Trim(),
             FechaNacimiento = dto.FechaNacimiento,
             Psicopatologias = dto.Psicopatologias,
             MedicamentosCajon = dto.MedicamentosCajon,
@@ -79,6 +80,7 @@ public class ResidentesController : ControllerBase
             Id = id,
             Nombres = dto.Nombres.Trim(),
             Apellidos = dto.Apellidos.Trim(),
+            Dpi = string.IsNullOrWhiteSpace(dto.Dpi) ? null : dto.Dpi.Trim(),
             FechaNacimiento = dto.FechaNacimiento,
             Psicopatologias = dto.Psicopatologias,
             MedicamentosCajon = dto.MedicamentosCajon

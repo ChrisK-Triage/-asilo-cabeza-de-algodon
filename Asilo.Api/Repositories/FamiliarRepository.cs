@@ -16,6 +16,7 @@ public class FamiliarRepository : IFamiliarRepository
                 f.ResidenteId,
                 r.Nombres + ' ' + r.Apellidos AS ResidenteNombre,
                 f.Nombre,
+                f.Dpi,
                 f.Email,
                 f.Telefono
         FROM Familiares f
@@ -40,8 +41,8 @@ public class FamiliarRepository : IFamiliarRepository
     public async Task<int> CrearAsync(Familiar familiar)
     {
         const string sql = @"
-            INSERT INTO Familiares (ResidenteId, Nombre, Email, Telefono)
-            VALUES (@ResidenteId, @Nombre, @Email, @Telefono);
+            INSERT INTO Familiares (ResidenteId, Nombre, Dpi, Email, Telefono)
+            VALUES (@ResidenteId, @Nombre, @Dpi, @Email, @Telefono);
             SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
         using var conexion = _context.CreateConnection();
@@ -53,12 +54,13 @@ public class FamiliarRepository : IFamiliarRepository
         const string sql = @"
             UPDATE Familiares
             SET Nombre   = @Nombre,
+                Dpi      = @Dpi,
                 Email    = @Email,
                 Telefono = @Telefono
             WHERE Id = @Id;";
 
         using var conexion = _context.CreateConnection();
-        return await conexion.ExecuteAsync(sql, new { Id = id, dto.Nombre, dto.Email, dto.Telefono }) > 0;
+        return await conexion.ExecuteAsync(sql, new { Id = id, dto.Nombre, dto.Dpi, dto.Email, dto.Telefono }) > 0;
     }
 
     public async Task<bool> EliminarAsync(int id)

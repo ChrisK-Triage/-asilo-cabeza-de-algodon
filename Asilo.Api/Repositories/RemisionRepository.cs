@@ -20,8 +20,10 @@ public class RemisionRepository : IRemisionRepository
                 rem.MedicoGeneralId,
                 u.NombreCompleto               AS MedicoNombre,
                 rem.Sintomatologia,
-                rem.EspecialidadSolicitada,
-                rem.EnfermeroAsignado,
+                rem.EspecialidadId,
+                esp.Nombre                     AS EspecialidadSolicitada,
+                rem.EnfermeroId,
+                enf.Nombre                     AS EnfermeroAsignado,
                 rem.FechaSolicitud,
                 CASE rem.Estado
                      WHEN 0 THEN 'Pendiente'
@@ -29,8 +31,12 @@ public class RemisionRepository : IRemisionRepository
                      ELSE 'Cancelada' END      AS Estado,
                 DATEDIFF(DAY, rem.FechaSolicitud, GETDATE()) AS DiasEspera
         FROM Remisiones rem
-        INNER JOIN Residentes r ON r.Id = rem.ResidenteId
-        INNER JOIN Usuarios   u ON u.Id = rem.MedicoGeneralId";
+        INNER JOIN Residentes     r   ON r.Id   = rem.ResidenteId
+        INNER JOIN Usuarios       u   ON u.Id   = rem.MedicoGeneralId
+        INNER JOIN Especialidades esp ON esp.Id = rem.EspecialidadId
+        -- LEFT: el enfermero es opcional, y un INNER haria desaparecer
+        -- de la lista las remisiones que no lo tienen.
+        LEFT  JOIN Enfermeros     enf ON enf.Id = rem.EnfermeroId";
 
     public async Task<IEnumerable<RemisionDto>> ObtenerTodasAsync(EstadoRemision? estado, int? residenteId)
     {
@@ -63,9 +69,9 @@ public class RemisionRepository : IRemisionRepository
     {
         const string sql = @"
             INSERT INTO Remisiones (ResidenteId, MedicoGeneralId, Sintomatologia,
-                                    EspecialidadSolicitada, EnfermeroAsignado, Estado)
+                                    EspecialidadId, EnfermeroId, Estado)
             VALUES (@ResidenteId, @MedicoGeneralId, @Sintomatologia,
-                    @EspecialidadSolicitada, @EnfermeroAsignado, 0);
+                    @EspecialidadId, @EnfermeroId, 0);
             SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
         using var conexion = _context.CreateConnection();

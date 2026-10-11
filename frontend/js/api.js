@@ -89,6 +89,90 @@ function moneda(valor) {
     }).format(valor ?? 0);
 }
 
+// ---------------- Paginacion ----------------
+//
+// Corta la lista en paginas y dibuja los controles. Lo hago aqui y no
+// en cada pantalla para que todas las tablas se comporten igual.
+//
+// Limitacion conocida: la API sigue devolviendo la lista completa y el
+// corte ocurre en el navegador. Con los volumenes del asilo (decenas de
+// residentes, cientos de citas al ano) no se nota, pero no escala: lo
+// correcto es paginar en SQL con OFFSET/FETCH y que el endpoint reciba
+// pagina y tamano. Lo dejo anotado como pendiente, no como resuelto.
+
+const FILAS_POR_PAGINA = 10;
+
+class Paginador {
+    /**
+     * contenedorId: el div donde van los controles.
+     * alCambiar: que hacer cuando el usuario cambia de pagina; normalmente
+     *            la misma funcion que pinta la tabla.
+     */
+    constructor(contenedorId, alCambiar, porPagina = FILAS_POR_PAGINA) {
+        this.contenedorId = contenedorId;
+        this.alCambiar = alCambiar;
+        this.porPagina = porPagina;
+        this.pagina = 1;
+    }
+
+    // Vuelvo a la primera pagina. Lo llamo cuando cambia un filtro: si
+    // estoy en la pagina 4 y el filtro deja 3 resultados, sin esto la
+    // tabla sale vacia y parece un error.
+    reiniciar() {
+        this.pagina = 1;
+    }
+
+    /**
+     * Devuelve el trozo de la lista que toca mostrar y dibuja los
+     * controles. La tabla solo tiene que pintar lo que esto devuelve.
+     */
+    recortar(lista) {
+        const total = lista.length;
+        const ultimaPagina = Math.max(1, Math.ceil(total / this.porPagina));
+
+        // Si borraron filas y la pagina actual ya no existe, retrocedo.
+        if (this.pagina > ultimaPagina) this.pagina = ultimaPagina;
+
+        const desde = (this.pagina - 1) * this.porPagina;
+        const hasta = Math.min(desde + this.porPagina, total);
+
+        this._pintarControles(desde, hasta, total, ultimaPagina);
+        return lista.slice(desde, hasta);
+    }
+
+    _pintarControles(desde, hasta, total, ultimaPagina) {
+        const caja = document.getElementById(this.contenedorId);
+        if (!caja) return;
+
+        // Con una sola pagina los controles sobran.
+        if (total <= this.porPagina) {
+            caja.innerHTML = "";
+            return;
+        }
+
+        const primera = this.pagina === 1;
+        const ultima = this.pagina === ultimaPagina;
+
+        caja.innerHTML = `
+            <span class="rango">${desde + 1}–${hasta} de ${total}</span>
+            <button type="button" class="btn-pagina" ${primera ? "disabled" : ""}
+                    aria-label="Página anterior">‹</button>
+            <button type="button" class="btn-pagina" ${ultima ? "disabled" : ""}
+                    aria-label="Página siguiente">›</button>
+        `;
+
+        const [anterior, siguiente] = caja.querySelectorAll("button");
+        anterior.addEventListener("click", () => this._ir(this.pagina - 1, ultimaPagina));
+        siguiente.addEventListener("click", () => this._ir(this.pagina + 1, ultimaPagina));
+    }
+
+    _ir(pagina, ultimaPagina) {
+        if (pagina < 1 || pagina > ultimaPagina) return;
+        this.pagina = pagina;
+        this.alCambiar();
+    }
+}
+
 function mostrarAviso(mensaje, tipo = "ok") {
     const caja = document.getElementById("aviso");
     if (!caja) return;

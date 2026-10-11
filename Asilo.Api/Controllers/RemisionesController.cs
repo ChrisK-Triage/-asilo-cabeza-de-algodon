@@ -12,11 +12,16 @@ public class RemisionesController : ControllerBase
 {
     private readonly IRemisionRepository _repo;
     private readonly IResidenteRepository _repoResidente;
+    private readonly ICatalogoRepository _catalogo;
 
-    public RemisionesController(IRemisionRepository repo, IResidenteRepository repoResidente)
+    public RemisionesController(
+        IRemisionRepository repo,
+        IResidenteRepository repoResidente,
+        ICatalogoRepository catalogo)
     {
         _repo = repo;
         _repoResidente = repoResidente;
+        _catalogo = catalogo;
     }
 
     /// <summary>Lista las remisiones. Filtros opcionales por estado y por residente.</summary>
@@ -54,13 +59,27 @@ public class RemisionesController : ControllerBase
         if (!await _repoResidente.ExisteAsync(dto.ResidenteId))
             return BadRequest(new { mensaje = $"El residente con Id {dto.ResidenteId} no existe." });
 
+        // La especialidad tiene que venir del catalogo. Antes era texto
+        // libre y se podia escribir cualquier cosa.
+        var especialidad = await _catalogo.ObtenerEspecialidadPorIdAsync(dto.EspecialidadId);
+        if (especialidad is null || !especialidad.Activa)
+            return BadRequest(new { mensaje = $"La especialidad con Id {dto.EspecialidadId} no existe o esta dada de baja." });
+
+        // El enfermero es opcional, pero si viene tiene que existir.
+        if (dto.EnfermeroId.HasValue)
+        {
+            var enfermero = await _catalogo.ObtenerEnfermeroPorIdAsync(dto.EnfermeroId.Value);
+            if (enfermero is null || !enfermero.Activo)
+                return BadRequest(new { mensaje = $"El enfermero con Id {dto.EnfermeroId} no existe o esta dado de baja." });
+        }
+
         var remision = new Remision
         {
             ResidenteId = dto.ResidenteId,
             MedicoGeneralId = dto.MedicoGeneralId,
             Sintomatologia = dto.Sintomatologia.Trim(),
-            EspecialidadSolicitada = dto.EspecialidadSolicitada.Trim(),
-            EnfermeroAsignado = dto.EnfermeroAsignado?.Trim(),
+            EspecialidadId = dto.EspecialidadId,
+            EnfermeroId = dto.EnfermeroId,
             Estado = EstadoRemision.Pendiente
         };
 

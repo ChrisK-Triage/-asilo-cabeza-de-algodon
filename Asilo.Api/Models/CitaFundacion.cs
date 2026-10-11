@@ -19,4 +19,10 @@ public class CitaFundacion
     public decimal CostoConsulta { get; set; }
     public EstadoCita Estado { get; set; }
     public bool Liquidada { get; set; }
+
+    // Que indico el especialista en la consulta. Lo guardo porque es el
+    // unico criterio para saber cuando la bitacora quedo completa: sin
+    // esto la cita no sabe que esta esperando.
+    public bool RequiereLaboratorio { get; set; }
+    public bool RequiereFarmacia { get; set; }
 }

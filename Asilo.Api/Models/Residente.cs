@@ -5,6 +5,7 @@ public class Residente
     public int Id { get; set; }
     public string Nombres { get; set; } = string.Empty;
     public string Apellidos { get; set; } = string.Empty;
+    public string? Dpi { get; set; }
     public DateTime FechaNacimiento { get; set; }
     public string? Psicopatologias { get; set; }
     public string? MedicamentosCajon { get; set; }
