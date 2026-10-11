@@ -32,6 +32,9 @@ builder.Services.AddSingleton<DapperContext>();
 // Scoped: un repositorio por peticion HTTP.
 builder.Services.AddScoped<IResidenteRepository, ResidenteRepository>();
 builder.Services.AddScoped<IRemisionRepository, RemisionRepository>();
+builder.Services.AddScoped<ICitaRepository, CitaRepository>();
+builder.Services.AddScoped<IAnexoRepository, AnexoRepository>();
+builder.Services.AddScoped<IFamiliarRepository, FamiliarRepository>();
 
 // CORS para que el frontend estatico pueda consumir la API.
 builder.Services.AddCors(options =>
