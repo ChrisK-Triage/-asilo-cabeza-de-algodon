@@ -52,6 +52,7 @@ public class ResidentesController : ControllerBase
             Apellidos = dto.Apellidos.Trim(),
             Dpi = string.IsNullOrWhiteSpace(dto.Dpi) ? null : dto.Dpi.Trim(),
             FechaNacimiento = dto.FechaNacimiento,
+            CuotaMensual = dto.CuotaMensual,
             Psicopatologias = dto.Psicopatologias,
             MedicamentosCajon = dto.MedicamentosCajon,
             Activo = true
@@ -82,6 +83,7 @@ public class ResidentesController : ControllerBase
             Apellidos = dto.Apellidos.Trim(),
             Dpi = string.IsNullOrWhiteSpace(dto.Dpi) ? null : dto.Dpi.Trim(),
             FechaNacimiento = dto.FechaNacimiento,
+            CuotaMensual = dto.CuotaMensual,
             Psicopatologias = dto.Psicopatologias,
             MedicamentosCajon = dto.MedicamentosCajon
         };

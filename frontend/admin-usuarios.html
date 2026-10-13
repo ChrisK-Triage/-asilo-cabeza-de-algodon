@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Usuarios · Asilo Cabeza de Algodón</title>
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/prototipo.css">
+<link rel="stylesheet" href="css/extra.css">
+<link rel="stylesheet" href="css/marca.css">
+</head>
+<body>
+<header><div class="barra">
+  <a class="marca-logo" href="panel-clinico.html">
+    <img src="img/logo-cabeza-de-algodon-oscuro.svg" alt="Asilo Cabeza de Algodón">
+  </a>
+  <div class="usuario"><strong>Licda. Mónica Herrera</strong>Administrador</div>
+</div></header>
+<div class="cuerpo">
+<aside>
+  <div class="grupo-nav">Módulo clínico</div>
+  <a href="panel-clinico.html">Residentes</a>
+  <a href="crear-remision.html">Remisiones</a>
+  <div class="grupo-nav">Fundación</div>
+  <a href="consola-fundacion.html">Asignación de citas</a>
+  <div class="grupo-nav">Exámenes y medicamentos</div>
+  <a href="panel-laboratorio.html">Laboratorio</a>
+  <a href="panel-farmacia.html">Farmacia</a>
+  <div class="grupo-nav">Administración</div>
+  <a href="estado-cuenta.html">Estado de cuenta</a>
+  <a href="admin-usuarios.html">Usuarios</a>
+  <div class="grupo-nav">Sesión</div>
+  <a href="login.html">Cerrar sesión</a>
+</aside>
+<main>
+  <div class="titulo-pagina">
+    <h1>Usuarios del sistema</h1>
+    <span class="conteo" id="conteo"></span>
+  </div>
+
+  <div class="aviso" id="aviso"></div>
+
+  <div class="panel">
+    <div class="panel-cuerpo">
+      <h2 id="titulo-form">Registrar usuario</h2>
+      <form id="form-usuario">
+        <div class="rejilla">
+          <div class="campo">
+            <label for="nombreCompleto">Nombre completo</label>
+            <input id="nombreCompleto" name="nombreCompleto" maxlength="150" required
+                   placeholder="Dra. Silvia Paz">
+          </div>
+          <div class="campo">
+            <label for="email">Correo</label>
+            <input type="email" id="email" name="email" maxlength="150" required
+                   placeholder="silvia.paz@fundacion.org">
+            <span class="ayuda">Es la credencial con la que inicia sesión</span>
+          </div>
+          <div class="campo">
+            <label for="rol">Rol</label>
+            <select id="rol" name="rol" required>
+              <option value="">Cargando…</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="especialidadId">Especialidad</label>
+            <select id="especialidadId" name="especialidadId" disabled>
+              <option value="">Solo aplica al rol Especialista</option>
+            </select>
+            <span class="ayuda" id="ayuda-especialidad">Se habilita al elegir el rol Especialista</span>
+          </div>
+          <!-- La contraseña solo aparece al dar de alta. En edición se
+               oculta: restablecer el acceso es otra operación, con su
+               propio panel, para que guardar un cambio de nombre no
+               pueda tocar la contraseña por descuido. -->
+          <div class="campo" id="campo-password">
+            <label for="password">Contraseña inicial</label>
+            <input type="password" id="password" name="password" minlength="8" maxlength="100"
+                   required autocomplete="new-password" placeholder="Mínimo 8 caracteres">
+            <span class="ayuda">Se guarda hasheada con BCrypt; no queda en claro en ningún lado</span>
+          </div>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="btn-principal" id="btn-guardar">Registrar usuario</button>
+          <button type="button" class="btn-secundario" id="btn-cancelar-edicion">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-cuerpo" style="padding-bottom:0">
+      <div class="rejilla">
+        <div class="campo">
+          <label for="buscar">Buscar por nombre o correo</label>
+          <input id="buscar" placeholder="Nombre, apellido o correo">
+        </div>
+        <div class="campo">
+          <label for="filtro-rol">Rol</label>
+          <select id="filtro-rol">
+            <option value="">Todos los roles</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="filtro-estado">Estado</label>
+          <select id="filtro-estado">
+            <option value="activos">Solo activos</option>
+            <option value="todos">Activos y dados de baja</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Usuario</th><th>Rol</th><th>Especialidad</th>
+          <th class="num">Registros</th><th>Acceso</th><th>Estado</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="cuerpo-tabla"></tbody>
+    </table>
+    <div class="paginador" id="paginador-usuarios"></div>
+  </div>
+
+  <!-- Restablecimiento de contraseña. Arranca oculto y se abre desde la
+       acción "Contraseña" de cada fila. -->
+  <div class="panel" id="panel-password" hidden>
+    <div class="panel-titulo">
+      Restablecer contraseña de <span id="password-usuario"></span>
+      <button class="btn-fila" style="float:right" onclick="cerrarPassword()">Cerrar</button>
+    </div>
+    <div class="panel-cuerpo">
+      <form id="form-password">
+        <div class="rejilla">
+          <div class="campo">
+            <label for="password-nueva">Contraseña nueva</label>
+            <input type="password" id="password-nueva" name="password" minlength="8" maxlength="100"
+                   required autocomplete="new-password" placeholder="Mínimo 8 caracteres">
+          </div>
+          <div class="campo">
+            <label for="password-repetir">Repetir contraseña</label>
+            <input type="password" id="password-repetir" minlength="8" maxlength="100"
+                   required autocomplete="new-password" placeholder="La misma de nuevo">
+            <span class="ayuda">La comparación es del lado del navegador; la API solo recibe una</span>
+          </div>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="btn-principal">Restablecer</button>
+          <button type="button" class="btn-secundario" onclick="cerrarPassword()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+</div>
+<script src="js/api.js"></script>
+<script src="js/usuarios.js"></script>
+</body>
+</html>

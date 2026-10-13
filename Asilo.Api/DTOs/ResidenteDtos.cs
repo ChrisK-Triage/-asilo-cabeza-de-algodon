@@ -22,6 +22,17 @@ public class ResidenteCreateDto
     [RegularExpression(@"^\d{13}$", ErrorMessage = "El DPI debe tener exactamente 13 digitos.")]
     public string? Dpi { get; set; }
 
+    // Lo que paga el familiar cada mes por la estancia. Es ingreso del
+    // asilo y queda fuera del descuento del convenio, que solo cubre los
+    // servicios de la fundacion.
+    //
+    // Obligatorio: sin cuota la factura del residente sale sin la
+    // estancia, y la columna tiene DEFAULT 0, asi que el error no se
+    // nota hasta que alguien revisa el cobro.
+    [Required(ErrorMessage = "La cuota mensual es obligatoria.")]
+    [Range(0, 99999, ErrorMessage = "La cuota mensual no puede ser negativa.")]
+    public decimal CuotaMensual { get; set; }
+
     public string? Psicopatologias { get; set; }
     public string? MedicamentosCajon { get; set; }
 }
@@ -36,6 +47,7 @@ public class ResidenteDto
     public string? Dpi { get; set; }
     public DateTime FechaNacimiento { get; set; }
     public int Edad { get; set; }
+    public decimal CuotaMensual { get; set; }
     public string? Psicopatologias { get; set; }
     public string? MedicamentosCajon { get; set; }
     public DateTime FechaIngreso { get; set; }

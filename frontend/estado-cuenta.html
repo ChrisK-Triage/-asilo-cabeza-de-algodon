@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Estado de cuenta · Asilo Cabeza de Algodón</title>
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -12,60 +15,168 @@
 <link rel="stylesheet" href="css/marca.css">
 </head>
 <body>
-<div class="cinta cinta-maqueta">MAQUETA DE LA FASE DE DISEÑO — El módulo de caja (RF-06, RF-07 y RF-10) aún no está implementado. Las cifras de esta pantalla son ilustrativas y no provienen de la base de datos.</div>
 <header><div class="barra">
-  <div class="marca">Asilo Cabeza de Algodón<span>Sistema de administración</span></div>
+  <a class="marca-logo" href="panel-clinico.html">
+    <img src="img/logo-cabeza-de-algodon-oscuro.svg" alt="Asilo Cabeza de Algodón">
+  </a>
   <div class="usuario"><strong>Licda. Mónica Herrera</strong>Administradora del asilo</div>
 </div></header>
 <div class="cuerpo">
 <aside>
-  <div class="grupo-nav">Finanzas</div>
-  <a href="estado-cuenta.html" class="activo">Estados de cuenta</a>
-  <a href="#">Donaciones</a>
-  <a href="#">Gastos operativos</a>
-  <a href="#">Pagos a la fundación</a>
-  <div class="grupo-nav">Informes</div>
-  <a href="#">Reportes</a>
+  <div class="grupo-nav">Módulo clínico</div>
+  <a href="panel-clinico.html">Residentes</a>
+  <a href="crear-remision.html">Remisiones</a>
+  <div class="grupo-nav">Fundación</div>
+  <a href="consola-fundacion.html">Asignación de citas</a>
+  <div class="grupo-nav">Exámenes y medicamentos</div>
+  <a href="panel-laboratorio.html">Laboratorio</a>
+  <a href="panel-farmacia.html">Farmacia</a>
+  <div class="grupo-nav">Administración</div>
+  <a href="estado-cuenta.html">Estado de cuenta</a>
+  <a href="admin-usuarios.html">Usuarios</a>
+  <div class="grupo-nav">Sesión</div>
   <a href="login.html">Cerrar sesión</a>
 </aside>
 <main>
-  <h1>Estado de cuenta</h1>
-  <p class="subtitulo">Rosa Elena Méndez · Período septiembre 2026 · Familiar responsable: Ana Méndez</p>
+  <div class="titulo-pagina">
+    <h1>Estado de cuenta</h1>
+    <span class="conteo" id="conteo"></span>
+  </div>
 
+  <div class="aviso" id="aviso"></div>
+
+  <!-- Selector del residente y del periodo a liquidar -->
   <div class="panel">
-    <div class="panel-titulo">Cargos del período</div>
-    <table>
-      <thead><tr><th>Concepto</th><th>Fecha</th><th>Origen</th><th class="num">Monto bruto</th></tr></thead>
-      <tbody>
-        <tr><td>Cuota mensual de estancia</td><td>01/09/2026</td><td>Asilo</td><td class="num">Q 1,200.00</td></tr>
-        <tr><td>Consulta de neurología</td><td>18/09/2026</td><td>Fundación</td><td class="num">Q 350.00</td></tr>
-        <tr><td>Hemograma completo</td><td>19/09/2026</td><td>Laboratorio</td><td class="num">Q 185.00</td></tr>
-        <tr><td>Donepezilo 10 mg × 30</td><td>19/09/2026</td><td>Farmacia</td><td class="num">Q 240.00</td></tr>
-      </tbody>
-    </table>
+    <div class="panel-cuerpo">
+      <h2>Liquidación del periodo</h2>
+      <div class="rejilla">
+        <div class="campo">
+          <label for="residenteId">Residente</label>
+          <select id="residenteId"></select>
+        </div>
+        <div class="campo">
+          <label for="mes">Mes</label>
+          <select id="mes">
+            <option value="1">Enero</option>
+            <option value="2">Febrero</option>
+            <option value="3">Marzo</option>
+            <option value="4">Abril</option>
+            <option value="5">Mayo</option>
+            <option value="6">Junio</option>
+            <option value="7">Julio</option>
+            <option value="8">Agosto</option>
+            <option value="9">Septiembre</option>
+            <option value="10">Octubre</option>
+            <option value="11">Noviembre</option>
+            <option value="12">Diciembre</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="anio">Año</label>
+          <input type="number" id="anio" min="2020" max="2100" value="2026">
+        </div>
+      </div>
+      <div class="acciones">
+        <button type="button" class="btn-principal" id="btn-calcular">Calcular periodo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Desglose del calculo. Oculto hasta que haya algo que mostrar. -->
+  <div class="panel" id="panel-calculo" hidden>
+    <div class="panel-titulo">Desglose del periodo <span id="rotulo-periodo"></span></div>
+    <div class="panel-cuerpo">
+      <div id="detalle-citas"></div>
+
+      <div class="desglose" style="margin-top:20px">
+        <div class="renglon"><span>Consultas</span><span class="num" id="d-consultas">—</span></div>
+        <div class="renglon"><span>Laboratorio</span><span class="num" id="d-laboratorio">—</span></div>
+        <div class="renglon"><span>Farmacia</span><span class="num" id="d-farmacia">—</span></div>
+        <div class="renglon"><strong>Servicios de la fundación</strong><span class="num" id="d-servicios">—</span></div>
+        <div class="renglon descuento"><span id="d-rotulo-descuento">Descuento del convenio</span><span class="num" id="d-descuento">—</span></div>
+        <div class="renglon"><span id="d-rotulo-cuota">Cuota mensual de estancia</span><span class="num" id="d-cuota">—</span></div>
+        <div class="renglon total"><span id="d-rotulo-neto">Total a pagar</span><span class="num" id="d-neto">—</span></div>
+      </div>
+
+      <p class="ayuda" style="margin-top:14px">
+        El descuento del convenio aplica únicamente sobre los servicios de la
+        fundación. La cuota mensual de estancia es un cobro del asilo y no se
+        descuenta.
+      </p>
+
+      <!-- Aviso de factura complementaria. Oculto salvo cuando el
+           periodo ya tiene factura emitida. -->
+      <p class="ayuda ayuda-alerta" id="aviso-complementaria" hidden></p>
+
+      <div class="acciones">
+        <button type="button" class="btn-principal" id="btn-emitir">Emitir factura</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Facturas del residente -->
+  <div class="titulo-pagina">
+    <h2 style="margin:0">Facturas</h2>
+    <span class="conteo" id="conteo-facturas"></span>
   </div>
 
   <div class="panel">
-    <div class="panel-titulo">Liquidación</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Periodo</th><th class="num">Servicios</th><th class="num">Descuento</th>
+          <th class="num">Cuota</th><th class="num">Total</th><th class="num">Pagado</th>
+          <th class="num">Saldo</th><th>Estado</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="cuerpo-facturas"></tbody>
+    </table>
+    <div class="paginador" id="paginador-facturas"></div>
+  </div>
+
+  <!-- Registro de abonos -->
+  <div class="panel" id="panel-pago" hidden>
+    <div class="panel-titulo">
+      Abonos de la factura <span id="pago-factura"></span>
+      <button class="btn-fila" style="float:right" id="btn-cerrar-pago">Cerrar</button>
+    </div>
     <div class="panel-cuerpo">
-      <div class="desglose">
-        <div class="renglon"><span>Total bruto</span><span class="num">Q 1,975.00</span></div>
-        <div class="renglon"><span class="descuento">Convenio de la fundación (20 % sobre servicios clínicos)</span><span class="num descuento">− Q 155.00</span></div>
-        <div class="renglon total"><span>Total neto a pagar</span><span class="num">Q 1,820.00</span></div>
-      </div>
+      <div id="detalle-factura"></div>
 
-      <div class="rejilla" style="margin-top:22px;max-width:520px">
-        <div class="campo"><label for="mon">Monto recibido (Q)</label><input id="mon" type="number" value="1820.00" step="0.01"></div>
-        <div class="campo"><label for="met">Método de pago</label><select id="met"><option selected>Transferencia bancaria</option><option>Efectivo</option><option>Cheque</option></select></div>
-      </div>
+      <form id="form-pago" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--linea)">
+        <div class="rejilla">
+          <div class="campo">
+            <label for="montoRecibido">Monto recibido (Q)</label>
+            <input type="number" id="montoRecibido" name="montoRecibido" min="0.01" step="0.01" required>
+            <span class="ayuda" id="ayuda-saldo"></span>
+          </div>
+          <div class="campo">
+            <label for="metodoPago">Método de pago</label>
+            <select id="metodoPago" name="metodoPago" required>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Transferencia">Transferencia</option>
+              <option value="Cheque">Cheque</option>
+              <option value="Deposito">Depósito</option>
+            </select>
+          </div>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="btn-principal">Registrar abono</button>
+        </div>
+      </form>
 
-      <div class="acciones">
-        <button class="btn-principal">Registrar pago y liquidar</button>
-        <button class="btn-secundario">Generar recibo en PDF</button>
-      </div>
-      <p class="ayuda" style="margin-top:12px">Si el monto recibido es menor al total neto, la cuenta quedará en estado "Saldo pendiente" y se registrará el abono parcial.</p>
+      <h3 style="margin-top:22px;font-size:15px">Abonos recibidos</h3>
+      <table>
+        <thead>
+          <tr><th>Fecha</th><th>Método</th><th>Registró</th><th class="num">Monto</th></tr>
+        </thead>
+        <tbody id="cuerpo-pagos"></tbody>
+      </table>
     </div>
   </div>
 </main>
 </div>
-</body></html>
+<script src="js/api.js"></script>
+<script src="js/estado-cuenta.js"></script>
+</body>
+</html>

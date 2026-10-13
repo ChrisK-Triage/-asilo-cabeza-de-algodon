@@ -31,6 +31,9 @@
   <div class="grupo-nav">Exámenes y medicamentos</div>
   <a href="panel-laboratorio.html">Laboratorio</a>
   <a href="panel-farmacia.html">Farmacia</a>
+  <div class="grupo-nav">Administración</div>
+  <a href="estado-cuenta.html">Estado de cuenta</a>
+  <a href="admin-usuarios.html">Usuarios</a>
   <div class="grupo-nav">Sesión</div>
   <a href="login.html">Cerrar sesión</a>
 </aside>
@@ -44,7 +47,7 @@
 
   <div class="panel">
     <div class="panel-cuerpo">
-      <h2>Registrar residente</h2>
+      <h2 id="titulo-form">Registrar residente</h2>
       <form id="form-residente">
         <div class="rejilla">
           <div class="campo">
@@ -65,6 +68,12 @@
             <label for="fechaNacimiento">Fecha de nacimiento</label>
             <input type="date" id="fechaNacimiento" name="fechaNacimiento" required>
           </div>
+          <div class="campo">
+            <label for="cuotaMensual">Cuota mensual (Q)</label>
+            <input type="number" id="cuotaMensual" name="cuotaMensual"
+                   min="0" step="0.01" required value="1200.00">
+            <span class="ayuda">Estancia. No lleva el descuento del convenio</span>
+          </div>
         </div>
         <div class="rejilla" style="margin-top:14px">
           <div class="campo">
@@ -77,8 +86,8 @@
           </div>
         </div>
         <div class="acciones">
-          <button type="submit" class="btn-principal">Registrar residente</button>
-          <button type="reset" class="btn-secundario">Limpiar</button>
+          <button type="submit" class="btn-principal" id="btn-guardar">Registrar residente</button>
+          <button type="button" class="btn-secundario" id="btn-cancelar-edicion">Cancelar</button>
         </div>
       </form>
     </div>
@@ -94,7 +103,7 @@
     <table>
       <thead>
         <tr>
-          <th>Residente</th><th>DPI</th><th class="num">Edad</th><th>Ingreso</th>
+          <th>Residente</th><th>DPI</th><th class="num">Edad</th><th class="num">Cuota</th><th>Ingreso</th>
           <th class="num">Familiares</th><th>Estado</th><th></th>
         </tr>
       </thead>

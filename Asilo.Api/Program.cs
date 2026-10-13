@@ -36,6 +36,8 @@ builder.Services.AddScoped<ICitaRepository, CitaRepository>();
 builder.Services.AddScoped<IAnexoRepository, AnexoRepository>();
 builder.Services.AddScoped<IFamiliarRepository, FamiliarRepository>();
 builder.Services.AddScoped<ICatalogoRepository, CatalogoRepository>();
+builder.Services.AddScoped<IFacturaRepository, FacturaRepository>();
+builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 
 // CORS para que el frontend estatico pueda consumir la API.
 builder.Services.AddCors(options =>
