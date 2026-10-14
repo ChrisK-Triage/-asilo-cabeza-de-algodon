@@ -24,7 +24,7 @@ public class FamiliarRepository : IFamiliarRepository
 
     public async Task<IEnumerable<FamiliarDto>> ObtenerPorResidenteAsync(int residenteId)
     {
-        string sql = SqlBase + " WHERE f.ResidenteId = @ResidenteId ORDER BY f.Nombre;";
+        string sql = SqlBase + " WHERE f.ResidenteId = @ResidenteId ORDER BY f.Id DESC;";
 
         using var conexion = _context.CreateConnection();
         return await conexion.QueryAsync<FamiliarDto>(sql, new { ResidenteId = residenteId });

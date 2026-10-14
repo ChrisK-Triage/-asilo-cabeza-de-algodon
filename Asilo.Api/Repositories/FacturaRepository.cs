@@ -259,7 +259,7 @@ public class FacturaRepository : IFacturaRepository
 
     public async Task<IEnumerable<FacturaDto>> ObtenerPorResidenteAsync(int residenteId)
     {
-        string sql = SqlFacturas + " WHERE f.ResidenteId = @ResidenteId ORDER BY f.Periodo DESC;";
+        string sql = SqlFacturas + " WHERE f.ResidenteId = @ResidenteId ORDER BY f.Periodo DESC, f.Id DESC;";
 
         using var conexion = _context.CreateConnection();
         return await conexion.QueryAsync<FacturaDto>(sql, new { ResidenteId = residenteId });
@@ -299,7 +299,7 @@ public class FacturaRepository : IFacturaRepository
             FROM Pagos p
             LEFT JOIN Usuarios u ON u.Id = p.RegistradoPor
             WHERE p.FacturaId = @FacturaId
-            ORDER BY p.FechaPago;";
+            ORDER BY p.FechaPago DESC, p.Id DESC;";
 
         using var conexion = _context.CreateConnection();
         return await conexion.QueryAsync<PagoDto>(sql, new { FacturaId = facturaId });

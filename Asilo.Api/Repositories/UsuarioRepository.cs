@@ -46,7 +46,7 @@ public class UsuarioRepository : IUsuarioRepository
         // trabaja aqui.
         string sql = SqlBase
                    + (soloActivos ? " WHERE u.Activo = 1" : "")
-                   + " ORDER BY u.Activo DESC, u.NombreCompleto;";
+                   + " ORDER BY u.Activo DESC, u.Id DESC;";
 
         using var conexion = _context.CreateConnection();
         var usuarios = await conexion.QueryAsync<UsuarioDto>(sql);

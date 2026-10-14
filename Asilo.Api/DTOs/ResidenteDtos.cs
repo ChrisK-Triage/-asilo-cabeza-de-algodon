@@ -37,6 +37,25 @@ public class ResidenteCreateDto
     public string? MedicamentosCajon { get; set; }
 }
 
+/// <summary>
+/// Los unicos dos campos del residente que escribe el medico general.
+///
+/// Existe porque dar de alta a un residente y atenderlo clinicamente son
+/// dos trabajos distintos. El alta es administrativa —DPI, fecha de
+/// ingreso, cuota de estancia, contactos de la familia— y es lo que se
+/// acuerda con la familia al recibirlo. Lo clinico son estos dos campos.
+///
+/// Mientras los dos grupos viajaban en el mismo DTO, darle al medico
+/// permiso para escribir el diagnostico le daba de paso permiso para
+/// cambiar la cuota que se le cobra a la familia. Un DTO de dos campos
+/// es lo que impide que ese permiso se estire.
+/// </summary>
+public class ResidenteClinicoDto
+{
+    public string? Psicopatologias { get; set; }
+    public string? MedicamentosCajon { get; set; }
+}
+
 // Salida: agrego Edad y TotalFamiliares, que no son columnas
 // sino datos derivados que la pantalla necesita mostrar.
 public class ResidenteDto

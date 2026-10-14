@@ -51,7 +51,7 @@ public class CitaRepository : ICitaRepository
         if (especialistaId.HasValue) condiciones.Add("c.EspecialistaId = @EspecialistaId");
 
         string where = condiciones.Count > 0 ? " WHERE " + string.Join(" AND ", condiciones) : "";
-        string sql = SqlBase + where + " ORDER BY c.BloqueHorario;";
+        string sql = SqlBase + where + " ORDER BY c.BloqueHorario DESC, c.Id DESC;";
 
         using var conexion = _context.CreateConnection();
         return await conexion.QueryAsync<CitaDto>(sql, new

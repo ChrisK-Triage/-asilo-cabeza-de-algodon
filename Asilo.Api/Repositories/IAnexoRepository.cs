@@ -14,7 +14,11 @@ public interface IAnexoRepository
     // Farmacia
     Task<IEnumerable<DespachoDto>> ObtenerDespachosAsync(int? citaId);
     Task<DespachoDto?> ObtenerDespachoPorIdAsync(int id);
-    Task<int> CrearDespachoAsync(DespachoFarmacia despacho);
+    // Recetar y entregar son dos operaciones porque son dos roles en dos
+    // momentos: el especialista indica el medicamento durante la consulta
+    // y farmacia lo entrega despues, fijando el precio.
+    Task<int> CrearRecetaAsync(DespachoFarmacia receta);
+    Task<bool> DespacharAsync(int id, decimal costoUnitario);
 
     // Comun
     Task<ResumenAnexosDto?> ObtenerResumenAsync(int citaId);

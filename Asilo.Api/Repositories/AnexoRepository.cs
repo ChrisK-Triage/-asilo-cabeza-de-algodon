@@ -39,7 +39,7 @@ public class AnexoRepository : IAnexoRepository
         if (citaId.HasValue) condiciones.Add("o.CitaId = @CitaId");
 
         string where = condiciones.Count > 0 ? " WHERE " + string.Join(" AND ", condiciones) : "";
-        string sql = SqlOrdenes + where + " ORDER BY o.FechaSolicitud;";
+        string sql = SqlOrdenes + where + " ORDER BY o.FechaSolicitud DESC, o.Id DESC;";
 
         using var conexion = _context.CreateConnection();
         return await conexion.QueryAsync<OrdenDto>(sql, new
@@ -129,7 +129,10 @@ public class AnexoRepository : IAnexoRepository
                 d.TiempoAplicacion,
                 d.CostoUnitario,
                 d.CostoTotal,
-                d.FechaDespacho
+                CASE d.Estado WHEN 0 THEN 'Recetado' ELSE 'Despachado' END AS Estado,
+                d.FechaReceta,
+                d.FechaDespacho,
+                DATEDIFF(DAY, d.FechaReceta, GETDATE()) AS DiasPendiente
         FROM DespachosFarmacia d
         INNER JOIN CitasFundacion c ON c.Id   = d.CitaId
         INNER JOIN Remisiones   rem ON rem.Id = c.RemisionId
@@ -138,7 +141,7 @@ public class AnexoRepository : IAnexoRepository
     public async Task<IEnumerable<DespachoDto>> ObtenerDespachosAsync(int? citaId)
     {
         string where = citaId.HasValue ? " WHERE d.CitaId = @CitaId" : "";
-        string sql = SqlDespachos + where + " ORDER BY d.FechaDespacho DESC;";
+        string sql = SqlDespachos + where + " ORDER BY d.FechaReceta DESC, d.Id DESC;";
 
         using var conexion = _context.CreateConnection();
         return await conexion.QueryAsync<DespachoDto>(sql, new { CitaId = citaId ?? 0 });
@@ -153,31 +156,61 @@ public class AnexoRepository : IAnexoRepository
     }
 
     /// <summary>
-    /// Registra el despacho y evalua el cierre de la bitacora en la
-    /// misma transaccion, por el mismo motivo que en laboratorio.
+    /// El especialista receta. No cierra bitacora: recetar no es
+    /// entregar, y la cita sigue esperando a farmacia.
     /// </summary>
-    public async Task<int> CrearDespachoAsync(DespachoFarmacia despacho)
+    public async Task<int> CrearRecetaAsync(DespachoFarmacia receta)
     {
-        // No inserto CostoTotal: es columna calculada y SQL Server
-        // la rechaza si intento escribirla.
-        const string sqlInsertar = @"
-            INSERT INTO DespachosFarmacia (CitaId, Medicamento, Cantidad, TiempoAplicacion, CostoUnitario)
-            VALUES (@CitaId, @Medicamento, @Cantidad, @TiempoAplicacion, @CostoUnitario);
+        // No inserto CostoTotal: es columna calculada y SQL Server la
+        // rechaza si intento escribirla. Tampoco FechaDespacho, que
+        // queda nula hasta que farmacia entregue.
+        const string sql = @"
+            INSERT INTO DespachosFarmacia
+                   (CitaId, Medicamento, Cantidad, TiempoAplicacion, CostoUnitario, Estado)
+            VALUES (@CitaId, @Medicamento, @Cantidad, @TiempoAplicacion, 0, 0);
             SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
+        using var conexion = _context.CreateConnection();
+        return await conexion.QuerySingleAsync<int>(sql, receta);
+    }
+
+    /// <summary>
+    /// Farmacia entrega: fija el precio y, en la misma transaccion,
+    /// evalua si con esto la cita ya recibio todo lo que se le indico.
+    ///
+    /// Van juntos por el mismo motivo que en laboratorio. Si la entrega
+    /// se guardara y el cierre fallara, la cita quedaria esperando un
+    /// medicamento ya entregado, que es el defecto de CF-01 otra vez.
+    /// </summary>
+    public async Task<bool> DespacharAsync(int id, decimal costoUnitario)
+    {
         using var conexion = _context.CreateConnection();
         conexion.Open();
         using var transaccion = conexion.BeginTransaction();
 
         try
         {
-            int id = await conexion.QuerySingleAsync<int>(sqlInsertar, despacho, transaccion);
+            const string sqlEntrega = @"
+                UPDATE DespachosFarmacia
+                SET CostoUnitario = @Costo,
+                    FechaDespacho = GETDATE(),
+                    Estado        = 1
+                WHERE Id = @Id AND Estado = 0;";
 
-            await conexion.ExecuteAsync(
-                SqlCerrarBitacora, new { despacho.CitaId }, transaccion);
+            bool entregado = await conexion.ExecuteAsync(
+                sqlEntrega, new { Id = id, Costo = costoUnitario }, transaccion) > 0;
+
+            if (entregado)
+            {
+                int citaId = await conexion.ExecuteScalarAsync<int>(
+                    "SELECT CitaId FROM DespachosFarmacia WHERE Id = @Id;",
+                    new { Id = id }, transaccion);
+
+                await conexion.ExecuteAsync(SqlCerrarBitacora, new { CitaId = citaId }, transaccion);
+            }
 
             transaccion.Commit();
-            return id;
+            return entregado;
         }
         catch
         {
@@ -204,6 +237,8 @@ public class AnexoRepository : IAnexoRepository
                       WHERE o.CitaId = c.Id), 0)              AS CostoLaboratorio,
                     (SELECT COUNT(*) FROM DespachosFarmacia d
                       WHERE d.CitaId = c.Id)                  AS TotalDespachos,
+                    (SELECT COUNT(*) FROM DespachosFarmacia d
+                      WHERE d.CitaId = c.Id AND d.Estado = 0)  AS DespachosPendientes,
                     ISNULL((SELECT SUM(d.CostoTotal) FROM DespachosFarmacia d
                       WHERE d.CitaId = c.Id), 0)              AS CostoFarmacia,
                     c.CostoConsulta,
@@ -303,8 +338,10 @@ public class AnexoRepository : IAnexoRepository
                    AND NOT EXISTS (SELECT 1 FROM OrdenesLaboratorio o
                                     WHERE o.CitaId = @CitaId AND o.Estado = 0)))
           AND (RequiereFarmacia = 0
-               OR EXISTS (SELECT 1 FROM DespachosFarmacia d
-                           WHERE d.CitaId = @CitaId));";
+               OR (    EXISTS (SELECT 1 FROM DespachosFarmacia d
+                                WHERE d.CitaId = @CitaId)
+                   AND NOT EXISTS (SELECT 1 FROM DespachosFarmacia d
+                                    WHERE d.CitaId = @CitaId AND d.Estado = 0)));";
 
     public async Task<bool> CerrarBitacoraSiCompletaAsync(int citaId)
     {

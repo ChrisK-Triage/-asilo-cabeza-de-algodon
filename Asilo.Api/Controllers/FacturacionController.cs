@@ -1,5 +1,7 @@
 using Asilo.Api.DTOs;
+using Asilo.Api.Models;
 using Asilo.Api.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Asilo.Api.Controllers;
@@ -10,6 +12,7 @@ namespace Asilo.Api.Controllers;
 [ApiController]
 [Route("api/facturacion")]
 [Produces("application/json")]
+[Authorize(Roles = RolesUsuario.Permiso.SoloAdministrador)]
 public class FacturacionController : ControllerBase
 {
     private readonly IFacturaRepository _repo;

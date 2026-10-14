@@ -1,6 +1,7 @@
 using Asilo.Api.DTOs;
 using Asilo.Api.Models;
 using Asilo.Api.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Asilo.Api.Controllers;
@@ -8,6 +9,7 @@ namespace Asilo.Api.Controllers;
 [ApiController]
 [Route("api/remisiones")]
 [Produces("application/json")]
+[Authorize(Roles = RolesUsuario.Permiso.Remisiones)]
 public class RemisionesController : ControllerBase
 {
     private readonly IRemisionRepository _repo;
@@ -46,6 +48,7 @@ public class RemisionesController : ControllerBase
     }
 
     /// <summary>Crea una remision a especialista (RF-02).</summary>
+    [Authorize(Roles = RolesUsuario.Permiso.Clinico)]
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

@@ -1,6 +1,7 @@
 using Asilo.Api.DTOs;
 using Asilo.Api.Models;
 using Asilo.Api.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Asilo.Api.Controllers;
@@ -8,6 +9,7 @@ namespace Asilo.Api.Controllers;
 [ApiController]
 [Route("api/laboratorio")]
 [Produces("application/json")]
+[Authorize(Roles = RolesUsuario.Permiso.Anexos)]
 public class LaboratorioController : ControllerBase
 {
     private readonly IAnexoRepository _repo;
@@ -39,6 +41,7 @@ public class LaboratorioController : ControllerBase
     /// El especialista solicita un examen durante la consulta (RF-05a).
     /// El costo no entra aqui: lo registra el tecnico al cargar el resultado.
     /// </summary>
+    [Authorize(Roles = RolesUsuario.Permiso.Consulta)]
     [HttpPost("ordenes")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -91,6 +94,7 @@ public class LaboratorioController : ControllerBase
     /// <summary>
     /// El tecnico de laboratorio carga el resultado y el costo del examen.
     /// </summary>
+    [Authorize(Roles = RolesUsuario.Permiso.Procesamiento)]
     [HttpPut("ordenes/{id:int}/resultado")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

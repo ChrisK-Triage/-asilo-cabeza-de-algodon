@@ -1,13 +1,23 @@
 using Asilo.Api.DTOs;
 using Asilo.Api.Models;
 using Asilo.Api.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Asilo.Api.Controllers;
 
+/// <summary>
+/// Contactos familiares del residente.
+///
+/// Registrar un contacto es parte de la admision, no de la atencion
+/// clinica: es a quien se le avisa de las citas y a quien se le factura.
+/// Por eso la clase deja leer al medico general, pero escribir solo a
+/// administracion.
+/// </summary>
 [ApiController]
 [Route("api/familiares")]
 [Produces("application/json")]
+[Authorize(Roles = RolesUsuario.Permiso.Clinico)]
 public class FamiliaresController : ControllerBase
 {
     private readonly IFamiliarRepository _repo;
@@ -48,6 +58,7 @@ public class FamiliaresController : ControllerBase
     }
 
     /// <summary>Registra un contacto familiar para un residente.</summary>
+    [Authorize(Roles = RolesUsuario.Permiso.Admision)]
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -80,6 +91,7 @@ public class FamiliaresController : ControllerBase
     }
 
     /// <summary>Corrige los datos de un contacto ya registrado.</summary>
+    [Authorize(Roles = RolesUsuario.Permiso.Admision)]
     [HttpPut("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -108,6 +120,7 @@ public class FamiliaresController : ControllerBase
     }
 
     /// <summary>Elimina un contacto familiar.</summary>
+    [Authorize(Roles = RolesUsuario.Permiso.Admision)]
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

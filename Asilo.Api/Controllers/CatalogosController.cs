@@ -1,6 +1,7 @@
 using Asilo.Api.DTOs;
 using Asilo.Api.Models;
 using Asilo.Api.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Asilo.Api.Controllers;
@@ -14,6 +15,7 @@ namespace Asilo.Api.Controllers;
 [ApiController]
 [Route("api/catalogos")]
 [Produces("application/json")]
+[Authorize]
 public class CatalogosController : ControllerBase
 {
     private readonly ICatalogoRepository _repo;
@@ -47,6 +49,7 @@ public class CatalogosController : ControllerBase
     }
 
     /// <summary>Agrega una especialidad al catalogo.</summary>
+    [Authorize(Roles = RolesUsuario.Permiso.SoloAdministrador)]
     [HttpPost("especialidades")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -69,6 +72,7 @@ public class CatalogosController : ControllerBase
     /// Da de baja una especialidad. Baja logica: las remisiones
     /// historicas siguen apuntando a ella y tienen que poder leerse.
     /// </summary>
+    [Authorize(Roles = RolesUsuario.Permiso.SoloAdministrador)]
     [HttpDelete("especialidades/{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -100,6 +104,7 @@ public class CatalogosController : ControllerBase
     }
 
     /// <summary>Registra un enfermero.</summary>
+    [Authorize(Roles = RolesUsuario.Permiso.SoloAdministrador)]
     [HttpPost("enfermeros")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -124,6 +129,7 @@ public class CatalogosController : ControllerBase
     }
 
     /// <summary>Da de baja a un enfermero sin borrar su historial.</summary>
+    [Authorize(Roles = RolesUsuario.Permiso.SoloAdministrador)]
     [HttpDelete("enfermeros/{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

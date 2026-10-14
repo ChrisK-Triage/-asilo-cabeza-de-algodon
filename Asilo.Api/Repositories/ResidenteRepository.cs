@@ -37,7 +37,7 @@ public class ResidenteRepository : IResidenteRepository
                      WHERE f.ResidenteId = r.Id)         AS TotalFamiliares
             FROM Residentes r
             WHERE r.Activo = 1
-            ORDER BY r.Apellidos, r.Nombres;";
+            ORDER BY r.FechaIngreso DESC, r.Id DESC;";
 
         using var conexion = _context.CreateConnection();
         return await conexion.QueryAsync<ResidenteDto>(sql);
@@ -98,6 +98,27 @@ public class ResidenteRepository : IResidenteRepository
 
         using var conexion = _context.CreateConnection();
         return await conexion.ExecuteAsync(sql, residente) > 0;
+    }
+
+    public async Task<bool> ActualizarDatosClinicosAsync(
+        int id, string? psicopatologias, string? medicamentosCajon)
+    {
+        // Dos columnas y ninguna mas. Lo que protege la cuota de estancia
+        // y el DPI no es una validacion que se pueda olvidar al agregar un
+        // campo, sino que la sentencia no los nombra.
+        const string sql = @"
+            UPDATE Residentes
+            SET Psicopatologias   = @Psicopatologias,
+                MedicamentosCajon = @MedicamentosCajon
+            WHERE Id = @Id AND Activo = 1;";
+
+        using var conexion = _context.CreateConnection();
+        return await conexion.ExecuteAsync(sql, new
+        {
+            Id = id,
+            Psicopatologias = psicopatologias,
+            MedicamentosCajon = medicamentosCajon
+        }) > 0;
     }
 
     public async Task<bool> DesactivarAsync(int id)

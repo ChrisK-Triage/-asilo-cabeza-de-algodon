@@ -1,6 +1,7 @@
 using Asilo.Api.DTOs;
 using Asilo.Api.Models;
 using Asilo.Api.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Asilo.Api.Controllers;
@@ -8,6 +9,7 @@ namespace Asilo.Api.Controllers;
 [ApiController]
 [Route("api/citas")]
 [Produces("application/json")]
+[Authorize(Roles = RolesUsuario.Permiso.AgendaCitas)]
 public class CitasController : ControllerBase
 {
     private readonly ICitaRepository _repo;
@@ -25,7 +27,57 @@ public class CitasController : ControllerBase
     public async Task<ActionResult<IEnumerable<CitaDto>>> Get(
         [FromQuery] EstadoCita? estado,
         [FromQuery] int? especialistaId)
-        => Ok(await _repo.ObtenerTodasAsync(estado, especialistaId));
+    {
+        // Un especialista solo ve lo suyo, y el filtro lo impone el
+        // servidor a partir del token: si lo dejara en manos del
+        // parametro, bastaria cambiar el numero en la direccion para
+        // leer la agenda y los diagnosticos de otro especialista.
+        if (User.IsInRole(RolesUsuario.Especialista)
+            && !User.IsInRole(RolesUsuario.Administrador))
+        {
+            especialistaId = UsuarioDelToken();
+        }
+
+        var citas = await _repo.ObtenerTodasAsync(estado, especialistaId);
+
+        return Ok(citas.Select(SegunElRol));
+    }
+
+    /// <summary>Id del usuario que firma la peticion, tomado del token.</summary>
+    private int UsuarioDelToken()
+        => int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out int id)
+            ? id
+            : 0;
+
+    /// <summary>
+    /// Recorta los campos clinicos de la cita segun quien pregunta.
+    ///
+    /// La fundacion arma la agenda: necesita la sintomatologia para saber
+    /// que especialidad asignar, pero no el diagnostico, que es el
+    /// hallazgo de la consulta y no cambia nada de su trabajo.
+    ///
+    /// El tecnico no necesita ninguno de los dos: registra un examen o un
+    /// despacho contra una cita, y para eso le basta el residente, la
+    /// especialidad y el estado.
+    ///
+    /// Mismo criterio que en residentes: si un dato no debe verse, no
+    /// sale del servidor. Una pantalla que lo recibe y no lo dibuja
+    /// igual lo tiene.
+    /// </summary>
+    private CitaDto SegunElRol(CitaDto cita)
+    {
+        if (User.IsInRole(RolesUsuario.TecnicoLabFarmacia))
+        {
+            cita.Diagnostico = null;
+            cita.Sintomatologia = string.Empty;
+        }
+        else if (User.IsInRole(RolesUsuario.Fundacion))
+        {
+            cita.Diagnostico = null;
+        }
+
+        return cita;
+    }
 
     /// <summary>Obtiene una cita por su Id.</summary>
     [HttpGet("{id:int}")]
@@ -37,7 +89,7 @@ public class CitasController : ControllerBase
 
         return cita is null
             ? NotFound(new { mensaje = $"No existe una cita con Id {id}." })
-            : Ok(cita);
+            : Ok(SegunElRol(cita));
     }
 
     /// <summary>Catalogo de especialistas para alimentar el select de la consola.</summary>
@@ -49,6 +101,7 @@ public class CitasController : ControllerBase
     /// <summary>
     /// La fundacion asigna especialista y horario a una remision pendiente (RF-03).
     /// </summary>
+    [Authorize(Roles = RolesUsuario.Permiso.Coordinacion)]
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -119,6 +172,7 @@ public class CitasController : ControllerBase
     /// <summary>
     /// El especialista registra el diagnostico de la consulta (RF-04).
     /// </summary>
+    [Authorize(Roles = RolesUsuario.Permiso.Consulta)]
     [HttpPut("{id:int}/diagnostico")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

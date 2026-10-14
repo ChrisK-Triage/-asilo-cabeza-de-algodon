@@ -1,6 +1,7 @@
 using Asilo.Api.DTOs;
 using Asilo.Api.Models;
 using Asilo.Api.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Asilo.Api.Controllers;
@@ -23,6 +24,7 @@ namespace Asilo.Api.Controllers;
 [ApiController]
 [Route("api/usuarios")]
 [Produces("application/json")]
+[Authorize(Roles = RolesUsuario.Permiso.SoloAdministrador)]
 public class UsuariosController : ControllerBase
 {
     private readonly IUsuarioRepository _repo;

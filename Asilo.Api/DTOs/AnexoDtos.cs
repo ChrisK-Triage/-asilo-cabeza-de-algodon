@@ -45,7 +45,10 @@ public class OrdenDto
 
 // ---------------- Farmacia ----------------
 
-public class DespachoCreateDto
+// El especialista receta durante la consulta. Sin costo: el precio lo
+// pone farmacia al entregar, igual que el tecnico de laboratorio pone
+// el costo del examen al cargar el resultado.
+public class RecetaCreateDto
 {
     [Required(ErrorMessage = "Debe indicar la cita.")]
     [Range(1, int.MaxValue)]
@@ -60,8 +63,15 @@ public class DespachoCreateDto
 
     [MaxLength(100)]
     public string? TiempoAplicacion { get; set; }
+}
 
-    [Range(0, 999999, ErrorMessage = "El costo unitario no puede ser negativo.")]
+// Farmacia entrega y fija el precio.
+public class EntregaDto
+{
+    // Mayor a cero y no "no negativo": un medicamento entregado en cero
+    // es un cargo que se pierde sin que nada lo advierta. Lo respalda
+    // tambien CK_Despachos_CostoEntregado en la base.
+    [Range(0.01, 999999, ErrorMessage = "El costo unitario debe ser mayor a cero.")]
     public decimal CostoUnitario { get; set; }
 }
 
@@ -76,7 +86,10 @@ public class DespachoDto
     public string? TiempoAplicacion { get; set; }
     public decimal CostoUnitario { get; set; }
     public decimal CostoTotal { get; set; }
-    public DateTime FechaDespacho { get; set; }
+    public string Estado { get; set; } = string.Empty;
+    public DateTime FechaReceta { get; set; }
+    public DateTime? FechaDespacho { get; set; }
+    public int DiasPendiente { get; set; }
 }
 
 /// <summary>
@@ -102,6 +115,7 @@ public class ResumenAnexosDto
     public int OrdenesPendientes { get; set; }
     public decimal CostoLaboratorio { get; set; }
     public int TotalDespachos { get; set; }
+    public int DespachosPendientes { get; set; }
     public decimal CostoFarmacia { get; set; }
     public decimal CostoConsulta { get; set; }
     public decimal CostoTotalCita { get; set; }

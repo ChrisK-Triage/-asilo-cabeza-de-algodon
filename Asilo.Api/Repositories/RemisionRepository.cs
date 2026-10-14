@@ -47,7 +47,7 @@ public class RemisionRepository : IRemisionRepository
         if (residenteId.HasValue) condiciones.Add("rem.ResidenteId = @ResidenteId");
 
         string where = condiciones.Count > 0 ? " WHERE " + string.Join(" AND ", condiciones) : "";
-        string sql = SqlBase + where + " ORDER BY rem.FechaSolicitud;";
+        string sql = SqlBase + where + " ORDER BY rem.FechaSolicitud DESC, rem.Id DESC;";
 
         using var conexion = _context.CreateConnection();
         return await conexion.QueryAsync<RemisionDto>(sql, new
