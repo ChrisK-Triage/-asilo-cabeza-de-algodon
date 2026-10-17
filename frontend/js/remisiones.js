@@ -1,8 +1,3 @@
-// =====================================================================
-// remisiones.js  -  Creacion y consulta de remisiones a especialista.
-// Carga el catalogo de residentes para alimentar el select de la FK.
-// =====================================================================
-
 let remisiones = [];
 let especialidades = [];
 
@@ -14,24 +9,17 @@ document.addEventListener("DOMContentLoaded", iniciar);
 form.addEventListener("submit", guardar);
 form.especialidadId.addEventListener("change", revisarCobertura);
 document.getElementById("filtro-estado").addEventListener("change", () => {
-    // Al cambiar el filtro vuelvo a la primera pagina: si estoy en la
-    // cuarta y el filtro deja tres filas, la tabla saldria vacia.
+
     paginador.reiniciar();
     cargarRemisiones();
 });
 
 async function iniciar() {
-    // allSettled y no all: si un catalogo falla quiero que los demas y
-    // la tabla carguen igual. Con Promise.all, un solo fallo cortaba la
-    // funcion y la pantalla quedaba completamente en blanco, sin tabla
-    // y sin ningun mensaje que explicara por que.
+
     await Promise.allSettled([cargarResidentes(), cargarEspecialidades(), cargarEnfermeros()]);
     await cargarRemisiones();
 }
 
-// El select se alimenta de la base: asi el medico no puede escribir
-// un ResidenteId que no existe. Prevencion de errores antes que
-// mensajes de error.
 async function cargarResidentes() {
     try {
         const residentes = await api.listar("residentes");
@@ -42,7 +30,6 @@ async function cargarResidentes() {
                 `<option value="${r.id}">${limpiar(r.nombres)} ${limpiar(r.apellidos)} — ${r.edad} anios</option>`
             ).join("");
 
-        // Si vengo desde el panel clinico con ?residente=N, lo preselecciono.
         const params = new URLSearchParams(location.search);
         const preseleccion = params.get("residente");
         if (preseleccion) form.residenteId.value = preseleccion;
@@ -52,19 +39,11 @@ async function cargarResidentes() {
     }
 }
 
-// Las especialidades salen de la tabla Especialidades, no de una lista
-// escrita en el HTML ni deducidas de quien las atiende.
-//
-// Ofrezco todas, incluso las que no tienen especialista activo, pero
-// marcadas. La necesidad clinica del residente es valida aunque la
-// fundacion no la cubra hoy: ocultarla borraria esa necesidad del
-// sistema. Lo que si hago es advertirlo antes de emitir.
 async function cargarEspecialidades() {
     let select;
 
     try {
-        // La busqueda del elemento va dentro del try: si el id cambia en
-        // el HTML, el catch ya no puede escribir en un undefined.
+
         select = form.especialidadId;
         especialidades = await api.listar("catalogos/especialidades");
 
@@ -87,8 +66,6 @@ async function cargarEspecialidades() {
     }
 }
 
-// Aviso bajo el select: el medico tiene que saber, antes de emitir, que
-// esa remision va a quedar esperando hasta que haya quien la atienda.
 function revisarCobertura() {
     const nota = document.getElementById("aviso-cobertura");
     const elegida = especialidades.find(e => e.id === Number(form.especialidadId.value));
@@ -178,8 +155,6 @@ function pintarTabla() {
     `).join("");
 }
 
-// La fundacion programa desde su propia consola al asignar especialista
-// y horario. Desde aqui el medico solo puede cancelar lo que emitio.
 function accionesFila(r) {
     if (r.estado === "Pendiente") {
         return `<button class="btn-fila peligro" onclick="cancelar(${r.id})">Cancelar</button>`;
@@ -201,12 +176,11 @@ async function guardar(evento) {
 
     const datos = {
         residenteId: Number(form.residenteId.value),
-        // Medico general de prueba. Cuando agregue autenticacion, este Id
-        // saldra del token JWT y no de un valor fijo.
+
         medicoGeneralId: 2,
         sintomatologia: form.sintomatologia.value.trim(),
         especialidadId: Number(form.especialidadId.value),
-        // Sin asignar queda en null: el enfermero es opcional.
+
         enfermeroId: form.enfermeroId.value ? Number(form.enfermeroId.value) : null
     };
 
@@ -224,8 +198,6 @@ async function guardar(evento) {
 async function cancelar(id) {
     const r = remisiones.find(x => x.id === id);
 
-    // Cancelar es irreversible: no hay forma de devolver una remision
-    // cancelada a pendiente. Confirmacion proporcional al riesgo.
     const confirmado = confirm(
         `Cancelar la remision de ${r.residenteNombre}?\n\n` +
         `Especialidad: ${r.especialidadSolicitada}\n` +

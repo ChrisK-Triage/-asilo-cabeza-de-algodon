@@ -1,19 +1,11 @@
-// =====================================================================
-// familiares.js  -  Contactos familiares de un residente.
-//
-// Vive dentro del panel clinico porque un familiar no se administra
-// solo: siempre se consulta en el contexto del residente que se esta
-// viendo. El correo que se guarda aqui es el que usara el
-// microservicio de notificaciones.
-// =====================================================================
-
-let residenteAbierto = null;   // Id del residente cuyo panel esta visible
+let residenteAbierto = null;
 let familiares = [];
-let familiarEnEdicion = null;  // null = el formulario esta en modo alta
+let familiarEnEdicion = null;
 
 const panelFamiliares = document.getElementById("panel-familiares");
 const formFamiliar = document.getElementById("form-familiar");
 const cuerpoFamiliares = document.getElementById("cuerpo-familiares");
+const formularioFamiliar = formFamiliar.closest(".panel-cuerpo");
 
 formFamiliar.addEventListener("submit", guardarFamiliar);
 
@@ -26,6 +18,7 @@ async function abrirFamiliares(residenteId) {
         r ? `${r.nombres} ${r.apellidos}` : `residente ${residenteId}`;
 
     panelFamiliares.hidden = false;
+    formularioFamiliar.hidden = !puedeAdmitir;
     panelFamiliares.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
     formFamiliar.reset();
@@ -68,10 +61,10 @@ function pintarFamiliares() {
             <td>${limpiar(f.dpi) || "<span class='secundario'>—</span>"}</td>
             <td>${limpiar(f.email)}</td>
             <td>${limpiar(f.telefono) || "—"}</td>
-            <td class="der">
+            <td class="der">${puedeAdmitir ? `
                 <button class="btn-fila" onclick="editarFamiliar(${f.id})">Editar</button>
                 <button class="btn-fila peligro" onclick="eliminarFamiliar(${f.id})">Quitar</button>
-            </td>
+            ` : `<span class="secundario">Solo lectura</span>`}</td>
         </tr>
     `).join("");
 }
@@ -108,8 +101,7 @@ async function guardarFamiliar(evento) {
 
     try {
         if (familiarEnEdicion) {
-            // El PUT no lleva ResidenteId: un contacto no se traslada de
-            // residente, si se equivocaron se quita y se vuelve a crear.
+
             await api.editar("familiares", familiarEnEdicion, datos);
             mostrarAviso("Contacto actualizado.");
         } else {
@@ -119,8 +111,7 @@ async function guardarFamiliar(evento) {
 
         cancelarEdicionFamiliar();
         await cargarFamiliares();
-        // El listado de residentes muestra el conteo de familiares,
-        // asi que lo recargo para que la columna quede al dia.
+
         await cargar();
         panelFamiliares.hidden = false;
     } catch (error) {

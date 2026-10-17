@@ -28,12 +28,16 @@
   <a href="crear-remision.html">Remisiones</a>
   <div class="grupo-nav">Fundación</div>
   <a href="consola-fundacion.html">Asignación de citas</a>
+  <a href="panel-especialista.html">Mis consultas</a>
   <div class="grupo-nav">Exámenes y medicamentos</div>
   <a href="panel-laboratorio.html">Laboratorio</a>
   <a href="panel-farmacia.html">Farmacia</a>
   <div class="grupo-nav">Administración</div>
   <a href="estado-cuenta.html">Estado de cuenta</a>
+  <a href="panel-caja.html">Donaciones y gastos</a>
+  <a href="panel-reportes.html">Reportes</a>
   <a href="admin-usuarios.html">Usuarios</a>
+  <a href="panel-notificaciones.html">Notificaciones</a>
   <div class="grupo-nav">Sesión</div>
   <a href="login.html">Cerrar sesión</a>
 </aside>
@@ -74,10 +78,6 @@
             </select>
             <span class="ayuda" id="ayuda-especialidad">Se habilita al elegir el rol Especialista</span>
           </div>
-          <!-- La contraseña solo aparece al dar de alta. En edición se
-               oculta: restablecer el acceso es otra operación, con su
-               propio panel, para que guardar un cambio de nombre no
-               pueda tocar la contraseña por descuido. -->
           <div class="campo" id="campo-password">
             <label for="password">Contraseña inicial</label>
             <input type="password" id="password" name="password" minlength="8" maxlength="100"
@@ -127,8 +127,6 @@
     <div class="paginador" id="paginador-usuarios"></div>
   </div>
 
-  <!-- Restablecimiento de contraseña. Arranca oculto y se abre desde la
-       acción "Contraseña" de cada fila. -->
   <div class="panel" id="panel-password" hidden>
     <div class="panel-titulo">
       Restablecer contraseña de <span id="password-usuario"></span>
@@ -158,6 +156,7 @@
   </div>
 </main>
 </div>
+<script src="js/sesion.js"></script>
 <script src="js/api.js"></script>
 <script src="js/usuarios.js"></script>
 </body>

@@ -18,3 +18,118 @@
 }
 
 .conteo { color: var(--tinta-suave); font-size: 14px; }
+
+/* El atributo hidden lo aplica el navegador con display:none desde su
+   hoja de usuario, que es la de menor prioridad: cualquier regla de
+   autor le gana. aside a declara display:block, asi que los enlaces
+   que la sesion ocultaba por rol seguian a la vista. Los encabezados
+   .grupo-nav si desaparecian, porque no declaran display, y esa
+   diferencia fue la que delato el problema.
+
+   Lo subo a regla de autor con !important para que hidden signifique
+   oculto en todo el sistema y no haya que recordar en cada caso si el
+   elemento trae un display propio. */
+[hidden] { display: none !important; }
+
+/* Tarjetas de resumen. marca.css les da fondo y el borde naranja de la
+   izquierda, pero no el relleno ni el tamano de la cifra, asi que sin
+   esto el numero sale del mismo tamano que el rotulo. */
+
+.tarjeta {
+    padding: 14px 16px;
+    border-radius: var(--radio);
+}
+
+.tarjeta .rotulo {
+    font-size: 12px;
+    color: var(--tinta-suave);
+}
+
+.tarjeta .cifra {
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-top: 4px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Reportes ---------- */
+
+.cabecera-reporte {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--naranja);
+}
+
+.cabecera-reporte h2 { margin: 0 0 2px; }
+.cabecera-reporte .der { text-align: right; line-height: 1.7; }
+
+.totales-reporte {
+    margin-left: auto;
+    max-width: 420px;
+}
+
+.totales-reporte .renglon {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--linea);
+}
+
+.totales-reporte .renglon.total {
+    border-bottom: none;
+    border-top: 2px solid var(--negro);
+    margin-top: 4px;
+    padding-top: 10px;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.totales-reporte .num { font-variant-numeric: tabular-nums; }
+
+/* ---------- Impresion ----------
+   El analisis proponia generar el PDF en el servidor con QuestPDF. Lo
+   resuelvo con la impresion del navegador: el usuario obtiene el mismo
+   PDF con "Guardar como PDF", sin sumar una dependencia al proyecto.
+
+   Lo que hace falta para que el papel se lea como documento y no como
+   captura de pantalla es esconder la navegacion, quitar fondos y
+   sombras, y evitar que una fila se parta entre dos hojas. */
+
+@media print {
+    .no-imprimir,
+    header,
+    aside,
+    .paginador { display: none !important; }
+
+    body { background: #FFFFFF; }
+
+    .cuerpo {
+        display: block;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .panel.reporte {
+        border: none;
+        box-shadow: none;
+        margin: 0;
+    }
+
+    /* Repite el encabezado de la tabla en cada hoja: sin esto, a partir
+       de la segunda pagina las columnas no se sabe que son. */
+    thead { display: table-header-group; }
+    tr { break-inside: avoid; }
+
+    .totales-reporte { break-inside: avoid; }
+
+    a[href]::after { content: ""; }
+
+    @page { margin: 1.5cm; }
+}

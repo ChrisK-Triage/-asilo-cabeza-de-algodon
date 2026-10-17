@@ -100,7 +100,8 @@ public class ServicioToken : IServicioToken
         {
             "panel-clinico.html", "crear-remision.html", "consola-fundacion.html",
             "panel-laboratorio.html", "panel-farmacia.html", "panel-especialista.html",
-            "estado-cuenta.html", "admin-usuarios.html"
+            "estado-cuenta.html", "panel-caja.html", "panel-reportes.html",
+            "admin-usuarios.html", "panel-notificaciones.html"
         },
 
         RolesUsuario.MedicoGeneral => new()

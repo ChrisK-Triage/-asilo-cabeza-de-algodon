@@ -28,78 +28,87 @@
   <a href="crear-remision.html">Remisiones</a>
   <div class="grupo-nav">Fundación</div>
   <a href="consola-fundacion.html">Asignación de citas</a>
+  <a href="panel-especialista.html">Mis consultas</a>
   <div class="grupo-nav">Exámenes y medicamentos</div>
   <a href="panel-laboratorio.html">Laboratorio</a>
   <a href="panel-farmacia.html">Farmacia</a>
   <div class="grupo-nav">Administración</div>
   <a href="estado-cuenta.html">Estado de cuenta</a>
+  <a href="panel-caja.html">Donaciones y gastos</a>
+  <a href="panel-reportes.html">Reportes</a>
   <a href="admin-usuarios.html">Usuarios</a>
+  <a href="panel-notificaciones.html">Notificaciones</a>
   <div class="grupo-nav">Sesión</div>
   <a href="login.html">Cerrar sesión</a>
 </aside>
 <main>
   <div class="titulo-pagina">
     <h1>Farmacia</h1>
+    <span class="conteo">Los medicamentos los receta el especialista durante la consulta</span>
   </div>
 
   <div class="aviso" id="aviso"></div>
 
-  <div class="panel">
-    <div class="panel-cuerpo">
-      <form id="form-despacho">
-        <div class="rejilla">
-          <div class="campo">
-            <label for="citaIdFarmacia">Cita asociada</label>
-            <select id="citaIdFarmacia" name="citaId" required></select>
-          </div>
-          <div class="campo">
-            <label for="medicamento">Medicamento</label>
-            <input id="medicamento" name="medicamento" maxlength="150" required placeholder="Donepezilo 10 mg">
-          </div>
-          <div class="campo">
-            <label for="cantidad">Cantidad</label>
-            <input type="number" id="cantidad" name="cantidad" min="1" max="10000" required placeholder="30">
-          </div>
-          <div class="campo">
-            <label for="costoUnitario">Costo unitario (Q)</label>
-            <input type="number" id="costoUnitario" name="costoUnitario" min="0" step="0.01" required placeholder="8.00">
-          </div>
-          <div class="campo">
-            <label for="tiempoAplicacion">Tiempo de aplicación</label>
-            <input id="tiempoAplicacion" name="tiempoAplicacion" maxlength="100" placeholder="1 tableta cada 24 horas">
-          </div>
-          <div class="campo">
-            <label>Costo total</label>
-            <div style="font-size:19px;font-weight:600;padding:8px 0" id="vista-total">Q 0.00</div>
-                      </div>
-        </div>
-        <div class="acciones">
-          <button type="submit" class="btn-principal">Registrar despacho</button>
-          <button type="reset" class="btn-secundario">Limpiar</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <div class="titulo-pagina">
-    <h2 style="margin:0">Despachos registrados</h2>
+    <h2 style="margin:0">Recetas y despachos</h2>
     <span class="conteo" id="conteo-despachos"></span>
   </div>
 
   <div class="panel">
+    <div class="panel-cuerpo" style="padding-bottom:0">
+      <div class="campo" style="max-width:240px">
+        <label for="filtro-despachos">Filtrar por estado</label>
+        <select id="filtro-despachos">
+          <option value="">Todas</option>
+          <option value="Recetado">Por entregar</option>
+          <option value="Despachado">Entregadas</option>
+        </select>
+      </div>
+    </div>
     <table>
       <thead>
         <tr>
           <th>Residente</th><th>Medicamento</th>
           <th class="num">Cantidad</th><th class="num">Unitario</th><th class="num">Total</th>
+          <th>Estado</th><th></th>
         </tr>
       </thead>
       <tbody id="cuerpo-despachos"></tbody>
     </table>
     <div class="paginador" id="paginador-despachos"></div>
   </div>
+
+  <div class="panel" id="panel-entrega" hidden>
+    <div class="panel-titulo">Entregar medicamento</div>
+    <div class="panel-cuerpo">
+      <div id="detalle-receta"></div>
+
+      <form id="form-entrega" style="margin-top:20px;padding-top:18px;border-top:1px solid var(--linea)">
+        <div class="rejilla" style="max-width:340px">
+          <div class="campo">
+            <label for="costoUnitario">Costo unitario (Q)</label>
+            <input type="number" id="costoUnitario" name="costoUnitario"
+                   min="0.01" step="0.01" required placeholder="8.00">
+            <span class="ayuda">Lo que cobra la fundación por unidad</span>
+          </div>
+          <div class="campo">
+            <label>Costo total</label>
+            <div style="font-size:19px;font-weight:600;padding:8px 0" id="vista-total">Q 0.00</div>
+          </div>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="btn-principal">Confirmar entrega</button>
+          <button type="button" class="btn-secundario" id="btn-cerrar-entrega">Cancelar</button>
+        </div>
+        <p class="ayuda" style="margin-top:12px">
+          Al confirmar, el cargo entra al módulo financiero y la cita puede cerrar su bitácora.
+        </p>
+      </form>
+    </div>
+  </div>
 </main>
 </div>
+<script src="js/sesion.js"></script>
 <script src="js/api.js"></script>
 <script src="js/farmacia.js"></script>
 </body>

@@ -1,5 +1,7 @@
+using System.Data;
 using Asilo.Api.Data;
 using Asilo.Api.DTOs;
+using Asilo.Api.Models;
 using Dapper;
 using Microsoft.Data.SqlClient;
 
@@ -8,8 +10,13 @@ namespace Asilo.Api.Repositories;
 public class FacturaRepository : IFacturaRepository
 {
     private readonly DapperContext _context;
+    private readonly IOutboxRepository _outbox;
 
-    public FacturaRepository(DapperContext context) => _context = context;
+    public FacturaRepository(DapperContext context, IOutboxRepository outbox)
+    {
+        _context = context;
+        _outbox = outbox;
+    }
 
     // ==================== CALCULO DEL PERIODO ====================
 
@@ -195,6 +202,8 @@ public class FacturaRepository : IFacturaRepository
                 }, transaccion);
             }
 
+            await EncolarAvisoDeFacturaAsync(conexion, transaccion, facturaId, calculo);
+
             transaccion.Commit();
             return facturaId;
         }
@@ -348,6 +357,8 @@ public class FacturaRepository : IFacturaRepository
 
             await conexion.ExecuteAsync(sqlEstado, new { FacturaId = facturaId }, transaccion);
 
+            await EncolarAvisoDePagoAsync(conexion, transaccion, facturaId, monto, metodo);
+
             transaccion.Commit();
             return pagoId;
         }
@@ -356,5 +367,69 @@ public class FacturaRepository : IFacturaRepository
             transaccion.Rollback();
             throw;
         }
+    }
+
+    // ==================== AVISOS A LA FAMILIA (RF-08) ====================
+
+    /// <summary>
+    /// El cobro del mes, encolado dentro de la misma transaccion que lo
+    /// emitio. El desglose viaja completo porque es lo que el familiar
+    /// necesita entender: cuanto es servicio, cuanto descuento y cuanto
+    /// estancia.
+    /// </summary>
+    private async Task EncolarAvisoDeFacturaAsync(
+        IDbConnection conexion, IDbTransaction transaccion,
+        int facturaId, CalculoPeriodoDto calculo)
+    {
+        var aviso = new AvisoFacturaDto
+        {
+            FacturaId = facturaId,
+            Residente = calculo.ResidenteNombre,
+            Anio = calculo.Anio,
+            Mes = calculo.Mes,
+            TotalServicios = calculo.TotalServicios,
+            DescuentoAplicado = calculo.DescuentoAplicado,
+            CuotaMensual = calculo.CuotaMensual,
+            TotalNeto = calculo.TotalNeto,
+            Destinatarios = await _outbox.ObtenerDestinatariosAsync(
+                conexion, transaccion, calculo.ResidenteId)
+        };
+
+        await _outbox.EncolarAsync(conexion, transaccion, TipoEventoOutbox.FacturaEmitida, aviso);
+    }
+
+    /// <summary>
+    /// Confirmacion del abono. El saldo se calcula aqui dentro, con el
+    /// pago recien insertado ya contado: si lo leyera despues del commit
+    /// podria haber entrado otro abono y la cifra del aviso no seria la
+    /// que corresponde a este pago.
+    /// </summary>
+    private async Task EncolarAvisoDePagoAsync(
+        IDbConnection conexion, IDbTransaction transaccion,
+        int facturaId, decimal monto, string metodo)
+    {
+        const string sql = @"
+            SELECT  f.ResidenteId,
+                    r.Nombres + ' ' + r.Apellidos AS Residente,
+                    f.TotalNeto - ISNULL((SELECT SUM(p.MontoRecibido)
+                                          FROM Pagos p WHERE p.FacturaId = f.Id), 0) AS Saldo
+            FROM Facturas f
+            INNER JOIN Residentes r ON r.Id = f.ResidenteId
+            WHERE f.Id = @FacturaId;";
+
+        var datos = await conexion.QuerySingleAsync(sql, new { FacturaId = facturaId }, transaccion);
+
+        var aviso = new AvisoPagoDto
+        {
+            FacturaId = facturaId,
+            Residente = (string)datos.Residente,
+            MontoRecibido = monto,
+            MetodoPago = metodo,
+            SaldoRestante = (decimal)datos.Saldo,
+            Destinatarios = await _outbox.ObtenerDestinatariosAsync(
+                conexion, transaccion, (int)datos.ResidenteId)
+        };
+
+        await _outbox.EncolarAsync(conexion, transaccion, TipoEventoOutbox.PagoRegistrado, aviso);
     }
 }

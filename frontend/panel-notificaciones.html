@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notificaciones · Asilo Cabeza de Algodón</title>
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/prototipo.css">
+<link rel="stylesheet" href="css/extra.css">
+<link rel="stylesheet" href="css/marca.css">
+</head>
+<body>
+<header><div class="barra">
+  <a class="marca-logo" href="panel-clinico.html">
+    <img src="img/logo-cabeza-de-algodon-oscuro.svg" alt="Asilo Cabeza de Algodón">
+  </a>
+  <div class="usuario"></div>
+</div></header>
+<div class="cuerpo">
+<aside>
+  <div class="grupo-nav">Módulo clínico</div>
+  <a href="panel-clinico.html">Residentes</a>
+  <a href="crear-remision.html">Remisiones</a>
+  <div class="grupo-nav">Fundación</div>
+  <a href="consola-fundacion.html">Asignación de citas</a>
+  <a href="panel-especialista.html">Mis consultas</a>
+  <div class="grupo-nav">Exámenes y medicamentos</div>
+  <a href="panel-laboratorio.html">Laboratorio</a>
+  <a href="panel-farmacia.html">Farmacia</a>
+  <div class="grupo-nav">Administración</div>
+  <a href="estado-cuenta.html">Estado de cuenta</a>
+  <a href="panel-caja.html">Donaciones y gastos</a>
+  <a href="panel-reportes.html">Reportes</a>
+  <a href="admin-usuarios.html">Usuarios</a>
+  <a href="panel-notificaciones.html">Notificaciones</a>
+  <div class="grupo-nav">Sesión</div>
+  <a href="login.html">Cerrar sesión</a>
+</aside>
+<main>
+  <div class="titulo-pagina">
+    <h1>Avisos a la familia</h1>
+    <span class="conteo" id="conteo"></span>
+  </div>
+
+  <div class="aviso" id="aviso"></div>
+
+  <div class="rejilla" style="margin-bottom:18px">
+    <div class="tarjeta">
+      <div class="rotulo">Pendientes</div>
+      <div class="cifra" id="r-pendientes">—</div>
+    </div>
+    <div class="tarjeta">
+      <div class="rotulo">Entregados</div>
+      <div class="cifra" id="r-entregados">—</div>
+    </div>
+    <div class="tarjeta">
+      <div class="rotulo">Fallidos</div>
+      <div class="cifra" id="r-fallidos">—</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-cuerpo" style="padding-bottom:0">
+      <div class="rejilla">
+        <div class="campo">
+          <label for="filtro-situacion">Situación</label>
+          <select id="filtro-situacion">
+            <option value="">Todos</option>
+            <option value="Pendiente">Pendientes</option>
+            <option value="Entregado">Entregados</option>
+            <option value="Fallido">Fallidos</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="auto">Actualización</label>
+          <select id="auto">
+            <option value="si" selected>Automática cada 5 s</option>
+            <option value="no">Manual</option>
+          </select>
+          <span class="ayuda">El despachador revisa la bandeja cada 15 segundos</span>
+        </div>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Evento</th><th>Destinatarios</th><th>Encolado</th>
+          <th>Situación</th><th class="num">Intentos</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="cuerpo-tabla"></tbody>
+    </table>
+    <div class="paginador" id="paginador-avisos"></div>
+  </div>
+
+  <div class="panel" id="panel-payload" hidden>
+    <div class="panel-titulo">
+      Contenido del aviso
+      <button class="btn-fila" style="float:right" onclick="cerrarPayload()">Cerrar</button>
+    </div>
+    <div class="panel-cuerpo">
+      <p class="ayuda">
+        Es lo que se guardó cuando ocurrió el hecho, no una consulta hecha al
+        entregar. Si el horario de la cita cambiara después, este aviso seguiría
+        diciendo lo que era cierto en su momento.
+      </p>
+      <pre id="payload" style="background:var(--beige-palido);border:1px solid var(--linea);
+                               border-radius:var(--radio);padding:14px;overflow-x:auto;
+                               font-size:13px;line-height:1.6;margin-top:12px"></pre>
+    </div>
+  </div>
+</main>
+</div>
+<script src="js/sesion.js"></script>
+<script src="js/api.js"></script>
+<script src="js/notificaciones.js"></script>
+</body>
+</html>

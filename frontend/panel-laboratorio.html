@@ -28,42 +28,26 @@
   <a href="crear-remision.html">Remisiones</a>
   <div class="grupo-nav">Fundación</div>
   <a href="consola-fundacion.html">Asignación de citas</a>
+  <a href="panel-especialista.html">Mis consultas</a>
   <div class="grupo-nav">Exámenes y medicamentos</div>
   <a href="panel-laboratorio.html">Laboratorio</a>
   <a href="panel-farmacia.html">Farmacia</a>
   <div class="grupo-nav">Administración</div>
   <a href="estado-cuenta.html">Estado de cuenta</a>
+  <a href="panel-caja.html">Donaciones y gastos</a>
+  <a href="panel-reportes.html">Reportes</a>
   <a href="admin-usuarios.html">Usuarios</a>
+  <a href="panel-notificaciones.html">Notificaciones</a>
   <div class="grupo-nav">Sesión</div>
   <a href="login.html">Cerrar sesión</a>
 </aside>
 <main>
   <div class="titulo-pagina">
     <h1>Laboratorio</h1>
+    <span class="conteo">Los exámenes los solicita el especialista durante la consulta</span>
   </div>
 
   <div class="aviso" id="aviso"></div>
-
-  <div class="panel">
-    <div class="panel-cuerpo">
-      <form id="form-orden">
-        <div class="rejilla">
-          <div class="campo">
-            <label for="citaId">Cita asociada</label>
-            <select id="citaId" name="citaId" required></select>
-            <span class="ayuda">Solo aparecen las citas en las que el especialista indicó exámenes</span>
-          </div>
-          <div class="campo">
-            <label for="tipoExamen">Examen solicitado</label>
-            <input id="tipoExamen" name="tipoExamen" maxlength="150" required placeholder="Hemograma completo">
-          </div>
-        </div>
-        <div class="acciones">
-          <button type="submit" class="btn-principal">Solicitar examen</button>
-        </div>
-      </form>
-    </div>
-  </div>
 
   <div class="titulo-pagina">
     <h2 style="margin:0">Órdenes</h2>
@@ -122,6 +106,7 @@
   </div>
 </main>
 </div>
+<script src="js/sesion.js"></script>
 <script src="js/api.js"></script>
 <script src="js/laboratorio.js"></script>
 </body>

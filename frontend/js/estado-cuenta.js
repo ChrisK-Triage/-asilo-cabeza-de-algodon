@@ -1,10 +1,3 @@
-// =====================================================================
-// estado-cuenta.js  -  Calculadora financiera y cobros (RF-06, RF-10).
-//
-// Reemplaza la maqueta de la fase de diseno, que tenia las cifras
-// escritas a mano en el HTML. Aqui todo sale del calculo de la API.
-// =====================================================================
-
 let facturas = [];
 let calculoActual = null;
 let facturaSeleccionada = null;
@@ -26,8 +19,7 @@ selResidente.addEventListener("change", () => {
 });
 
 async function iniciar() {
-    // El mes por omision es el anterior al actual: lo normal es liquidar
-    // un periodo ya terminado, no el que todavia esta corriendo.
+
     const hoy = new Date();
     const mesAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
     document.getElementById("mes").value = mesAnterior.getMonth() + 1;
@@ -54,8 +46,6 @@ async function cargarResidentes() {
     }
 }
 
-// ---------------- Calculo del periodo ----------------
-
 async function calcular() {
     const residenteId = Number(selResidente.value);
     const mes = Number(document.getElementById("mes").value);
@@ -81,8 +71,6 @@ function pintarCalculo() {
     document.getElementById("rotulo-periodo").textContent =
         `${String(c.mes).padStart(2, "0")}/${c.anio} · ${c.residenteNombre}`;
 
-    // Detalle de las citas que entran. Sin esto el total es un numero
-    // que hay que creer; con esto se puede verificar renglon por renglon.
     const detalle = document.getElementById("detalle-citas");
     if (c.citas.length === 0) {
         detalle.innerHTML = `<p class="ayuda">
@@ -123,15 +111,10 @@ function pintarCalculo() {
     document.getElementById("d-cuota").textContent       = moneda(c.cuotaMensual);
     document.getElementById("d-neto").textContent        = moneda(c.totalNeto);
 
-    // El descuento va en negativo y con el porcentaje a la vista: es la
-    // cifra que el familiar va a querer entender.
     document.getElementById("d-rotulo-descuento").textContent =
         `Descuento del convenio (${c.porcentajeDescuento}% sobre servicios)`;
     document.getElementById("d-descuento").textContent = "− " + moneda(c.descuentoAplicado);
 
-    // En una complementaria la cuota viene en cero porque ya se cobro.
-    // Lo digo en el rotulo en vez de dejar un "Q 0.00" suelto, que se
-    // leeria como que el residente no paga estancia.
     document.getElementById("d-rotulo-cuota").textContent = c.esComplementaria
         ? `Cuota mensual de estancia (ya cobrada en la factura #${c.facturaExistenteId})`
         : "Cuota mensual de estancia";
@@ -143,14 +126,6 @@ function pintarCalculo() {
     pintarBoton(c);
 }
 
-// Antes esta pantalla bloqueaba el boton en cuanto el periodo tenia
-// factura. Eso dejaba a la vista un desglose con cargos que nadie podia
-// cobrar: la cita cerrada despues del corte sumaba al total y el unico
-// boton que la habria liquidado estaba deshabilitado.
-//
-// Ahora el periodo facturado no cierra nada por si mismo. Lo que decide
-// es si hay citas nuevas: si las hay, se emite una complementaria; si no
-// las hay, no queda nada que cobrar y ahi si el boton se apaga.
 function pintarBoton(c) {
     const btn = document.getElementById("btn-emitir");
     const aviso = document.getElementById("aviso-complementaria");
@@ -220,8 +195,6 @@ async function emitir() {
     }
 }
 
-// ---------------- Facturas ----------------
-
 async function cargarFacturas() {
     const residenteId = Number(selResidente.value);
     const cuerpo = document.getElementById("cuerpo-facturas");
@@ -261,14 +234,10 @@ function pintarFacturas() {
         return;
     }
 
-    // Cual es la primera factura de cada periodo: las demas del mismo
-    // mes son complementarias. Lo deduzco del Id mas bajo y no de que
-    // la cuota venga en cero, porque un residente sin cuota tendria su
-    // primera factura tambien en cero y saldria mal etiquetada.
     const primeraDelPeriodo = new Set();
     const vistos = new Map();
     for (const f of facturas) {
-        const clave = f.periodo.slice(0, 7);          // aaaa-mm
+        const clave = f.periodo.slice(0, 7);
         if (!vistos.has(clave) || f.id < vistos.get(clave)) vistos.set(clave, f.id);
     }
     vistos.forEach(id => primeraDelPeriodo.add(id));
@@ -302,13 +271,10 @@ function claseEstadoFactura(estado) {
     return "e-proceso";
 }
 
-// El periodo es un primero de mes: muestro mes y anio, no la fecha.
 function periodo(iso) {
     const d = new Date(iso);
     return d.toLocaleDateString("es-GT", { month: "long", year: "numeric" });
 }
-
-// ---------------- Abonos ----------------
 
 async function abrirPago(facturaId) {
     facturaSeleccionada = facturas.find(f => f.id === facturaId);
@@ -328,7 +294,6 @@ async function abrirPago(facturaId) {
                 <div class="valor">${moneda(f.saldo)}</div></div>
         </div>`;
 
-    // El formulario solo tiene sentido si queda algo por cobrar.
     formPago.hidden = f.saldo <= 0;
     if (f.saldo > 0) {
         formPago.montoRecibido.value = "";
@@ -373,7 +338,7 @@ async function registrarPago(evento) {
     const datos = {
         montoRecibido: Number(formPago.montoRecibido.value),
         metodoPago: formPago.metodoPago.value,
-        // Administradora de prueba. Con autenticacion saldra del token.
+
         registradoPor: 1
     };
 

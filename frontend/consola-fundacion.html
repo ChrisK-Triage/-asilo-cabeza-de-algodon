@@ -28,12 +28,16 @@
   <a href="crear-remision.html">Remisiones</a>
   <div class="grupo-nav">Fundación</div>
   <a href="consola-fundacion.html">Asignación de citas</a>
+  <a href="panel-especialista.html">Mis consultas</a>
   <div class="grupo-nav">Exámenes y medicamentos</div>
   <a href="panel-laboratorio.html">Laboratorio</a>
   <a href="panel-farmacia.html">Farmacia</a>
   <div class="grupo-nav">Administración</div>
   <a href="estado-cuenta.html">Estado de cuenta</a>
+  <a href="panel-caja.html">Donaciones y gastos</a>
+  <a href="panel-reportes.html">Reportes</a>
   <a href="admin-usuarios.html">Usuarios</a>
+  <a href="panel-notificaciones.html">Notificaciones</a>
   <div class="grupo-nav">Sesión</div>
   <a href="login.html">Cerrar sesión</a>
 </aside>
@@ -117,45 +121,9 @@
     </table>
     <div class="paginador" id="paginador-citas"></div>
   </div>
-  <div class="panel" id="panel-diagnostico" style="display:none">
-    <div class="panel-titulo">Registrar la consulta</div>
-    <div class="panel-cuerpo">
-      <div id="detalle-cita"></div>
-
-      <form id="form-diagnostico" style="margin-top:20px;padding-top:18px;border-top:1px solid var(--linea)">
-        <div class="campo">
-          <label for="diagnostico">Diagnóstico</label>
-          <textarea id="diagnostico" name="diagnostico" required
-            placeholder="Hallazgos de la consulta, impresión diagnóstica e indicaciones."></textarea>
-          <span class="ayuda">Una vez guardado no se puede modificar: el expediente clínico es un registro histórico</span>
-        </div>
-        <!-- Dos casillas y no una: el especialista puede indicar solo
-             examenes, solo medicamento, los dos o ninguno. Ademas cada
-             casilla queda guardada, que es lo que permite saber despues
-             cuando la bitacora de la cita quedo completa. -->
-        <div class="campo" style="margin-top:14px">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-            <input type="checkbox" id="requiereLaboratorio" name="requiereLaboratorio" style="width:auto">
-            Necesita exámenes de laboratorio
-          </label>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:8px">
-            <input type="checkbox" id="requiereFarmacia" name="requiereFarmacia" style="width:auto">
-            Necesita medicamentos de farmacia
-          </label>
-          <span class="ayuda">
-            La cita queda abierta esperando solo lo que marques. Si no marcas
-            nada, la consulta se cierra al guardar.
-          </span>
-        </div>
-        <div class="acciones">
-          <button type="submit" class="btn-principal">Guardar consulta</button>
-          <button type="button" class="btn-secundario" id="btn-cerrar-diagnostico">Cancelar</button>
-        </div>
-      </form>
-    </div>
-  </div>
 </main>
 </div>
+<script src="js/sesion.js"></script>
 <script src="js/api.js"></script>
 <script src="js/fundacion.js"></script>
 </body>

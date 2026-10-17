@@ -1,23 +1,22 @@
-// =====================================================================
-// api.js
-// Punto unico de contacto con la API. Si cambia la direccion del
-// servidor o el esquema de autenticacion, lo ajusto solo aqui.
-// =====================================================================
-
-// Puerto del perfil "http" de launchSettings.json.
-const API_URL = "http://localhost:5177/api";
+const API_URL = (location.protocol === "file:" ||
+                 (location.hostname === "localhost" && location.port !== "5177"))
+    ? "http://localhost:5177/api"
+    : "/api";
 
 async function apiFetch(ruta, opciones = {}) {
     let respuesta;
 
+    const cabeceras = { "Content-Type": "application/json" };
+    const token = typeof sesion !== "undefined" ? sesion.token : null;
+    if (token) cabeceras.Authorization = `Bearer ${token}`;
+
     try {
         respuesta = await fetch(`${API_URL}/${ruta}`, {
-            headers: { "Content-Type": "application/json" },
-            ...opciones
+            ...opciones,
+            headers: { ...cabeceras, ...(opciones.headers ?? {}) }
         });
     } catch {
-        // Este catch salta cuando el servidor no responde: API apagada,
-        // puerto equivocado o certificado de desarrollo sin aceptar.
+
         throw new Error(
             "No se pudo conectar con el servidor. Verificar que la API este " +
             "ejecutandose y que el puerto en api.js sea el correcto."
@@ -26,6 +25,18 @@ async function apiFetch(ruta, opciones = {}) {
 
     if (respuesta.status === 204) return null;
 
+    if (respuesta.status === 401 && typeof sesion !== "undefined") {
+        sesion.borrar();
+        if (!location.pathname.endsWith("login.html")) {
+            window.location.replace("login.html");
+        }
+        throw new Error("La sesión expiró. Hay que volver a entrar.");
+    }
+
+    if (respuesta.status === 403) {
+        throw new Error("Tu rol no tiene permiso para esta operación.");
+    }
+
     if (!respuesta.ok) {
         let detalle = `Error ${respuesta.status}`;
         try {
@@ -33,10 +44,10 @@ async function apiFetch(ruta, opciones = {}) {
             if (cuerpo.mensaje) {
                 detalle = cuerpo.mensaje;
             } else if (cuerpo.errors) {
-                // Errores de validacion de DataAnnotations: {"Nombres": ["..."]}
+
                 detalle = Object.values(cuerpo.errors).flat().join(" ");
             }
-        } catch { /* la respuesta no traia JSON */ }
+        } catch {  }
         throw new Error(detalle);
     }
 
@@ -49,16 +60,11 @@ const api = {
     crear:    (recurso, datos) => apiFetch(recurso, { method: "POST", body: JSON.stringify(datos) }),
     editar:   (recurso, id, datos) => apiFetch(`${recurso}/${id}`, { method: "PUT", body: JSON.stringify(datos) }),
     parchar:  (ruta, datos) => apiFetch(ruta, { method: "PATCH", body: JSON.stringify(datos) }),
-    // Para subrutas como laboratorio/ordenes/5/resultado
+
     enviarPut: (ruta, datos) => apiFetch(ruta, { method: "PUT", body: JSON.stringify(datos) }),
     eliminar: (recurso, id) => apiFetch(`${recurso}/${id}`, { method: "DELETE" })
 };
 
-// ---------------- Utilidades compartidas ----------------
-
-// Escapa el texto antes de insertarlo en el DOM.
-// Sin esto, un residente llamado <script>...</script> se ejecutaria
-// al pintar la tabla. Es la mitigacion de XSS del lado del cliente.
 function limpiar(texto) {
     const div = document.createElement("div");
     div.textContent = texto ?? "";
@@ -89,25 +95,10 @@ function moneda(valor) {
     }).format(valor ?? 0);
 }
 
-// ---------------- Paginacion ----------------
-//
-// Corta la lista en paginas y dibuja los controles. Lo hago aqui y no
-// en cada pantalla para que todas las tablas se comporten igual.
-//
-// Limitacion conocida: la API sigue devolviendo la lista completa y el
-// corte ocurre en el navegador. Con los volumenes del asilo (decenas de
-// residentes, cientos de citas al ano) no se nota, pero no escala: lo
-// correcto es paginar en SQL con OFFSET/FETCH y que el endpoint reciba
-// pagina y tamano. Lo dejo anotado como pendiente, no como resuelto.
-
 const FILAS_POR_PAGINA = 10;
 
 class Paginador {
-    /**
-     * contenedorId: el div donde van los controles.
-     * alCambiar: que hacer cuando el usuario cambia de pagina; normalmente
-     *            la misma funcion que pinta la tabla.
-     */
+
     constructor(contenedorId, alCambiar, porPagina = FILAS_POR_PAGINA) {
         this.contenedorId = contenedorId;
         this.alCambiar = alCambiar;
@@ -115,22 +106,14 @@ class Paginador {
         this.pagina = 1;
     }
 
-    // Vuelvo a la primera pagina. Lo llamo cuando cambia un filtro: si
-    // estoy en la pagina 4 y el filtro deja 3 resultados, sin esto la
-    // tabla sale vacia y parece un error.
     reiniciar() {
         this.pagina = 1;
     }
 
-    /**
-     * Devuelve el trozo de la lista que toca mostrar y dibuja los
-     * controles. La tabla solo tiene que pintar lo que esto devuelve.
-     */
     recortar(lista) {
         const total = lista.length;
         const ultimaPagina = Math.max(1, Math.ceil(total / this.porPagina));
 
-        // Si borraron filas y la pagina actual ya no existe, retrocedo.
         if (this.pagina > ultimaPagina) this.pagina = ultimaPagina;
 
         const desde = (this.pagina - 1) * this.porPagina;
@@ -144,7 +127,6 @@ class Paginador {
         const caja = document.getElementById(this.contenedorId);
         if (!caja) return;
 
-        // Con una sola pagina los controles sobran.
         if (total <= this.porPagina) {
             caja.innerHTML = "";
             return;
@@ -182,10 +164,37 @@ function mostrarAviso(mensaje, tipo = "ok") {
     caja._temporizador = setTimeout(() => (caja.className = "aviso"), 5000);
 }
 
-// Marca como activo el enlace de la pagina actual en la navegacion lateral.
 document.addEventListener("DOMContentLoaded", () => {
     const actual = location.pathname.split("/").pop();
     document.querySelectorAll("aside a").forEach(a => {
         if (a.getAttribute("href") === actual) a.classList.add("activo");
     });
 });
+
+function etiquetaEstado(c) {
+    if (c.estado === "Esperando anexos") {
+        const faltan = [];
+        if (c.requiereLaboratorio) faltan.push("exámenes");
+        if (c.requiereFarmacia)    faltan.push("medicamento");
+
+        return faltan.length
+            ? limpiar(`Esperando ${faltan.join(" y ")}`)
+            : "Esperando anexos";
+    }
+
+    const mapa = {
+        "Programada":          "Sin consulta",
+        "En evaluacion":       "En consulta",
+        "Bitacora completada": "Consulta cerrada",
+        "Costos calculados":   "Costos aplicados"
+    };
+    return limpiar(mapa[c.estado] || c.estado);
+}
+
+function claseEstadoCita(estado) {
+    if (estado === "Programada")          return "e-pendiente";
+    if (estado === "En evaluacion")       return "e-proceso";
+    if (estado === "Esperando anexos")    return "e-proceso";
+    if (estado === "Bitacora completada") return "e-completo";
+    return "e-completo";
+}

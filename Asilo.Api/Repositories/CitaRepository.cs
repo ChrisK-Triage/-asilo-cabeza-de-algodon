@@ -9,8 +9,13 @@ namespace Asilo.Api.Repositories;
 public class CitaRepository : ICitaRepository
 {
     private readonly DapperContext _context;
+    private readonly IOutboxRepository _outbox;
 
-    public CitaRepository(DapperContext context) => _context = context;
+    public CitaRepository(DapperContext context, IOutboxRepository outbox)
+    {
+        _context = context;
+        _outbox = outbox;
+    }
 
     // Tres JOIN: la cita necesita datos de la remision, del residente
     // y del especialista para que la pantalla no tenga que pedirlos aparte.
@@ -95,6 +100,8 @@ public class CitaRepository : ICitaRepository
             const string sqlRemision = "UPDATE Remisiones SET Estado = 1 WHERE Id = @RemisionId;";
             await conexion.ExecuteAsync(sqlRemision, new { cita.RemisionId }, transaccion);
 
+            await EncolarAvisoDeCitaAsync(conexion, transaccion, idCita);
+
             transaccion.Commit();
             return idCita;
         }
@@ -103,6 +110,47 @@ public class CitaRepository : ICitaRepository
             transaccion.Rollback();
             throw;
         }
+    }
+
+    /// <summary>
+    /// Deja encolado el aviso de la cita (RF-08), dentro de la misma
+    /// transaccion que la acaba de crear.
+    ///
+    /// Que vaya aqui adentro es el punto entero: si el commit falla, no
+    /// queda un aviso de una cita que no existe; y si el commit pasa, el
+    /// aviso esta garantizado aunque el servicio de correo este caido.
+    /// </summary>
+    private async Task EncolarAvisoDeCitaAsync(
+        IDbConnection conexion, IDbTransaction transaccion, int citaId)
+    {
+        const string sql = @"
+            SELECT  c.Id                            AS CitaId,
+                    rem.ResidenteId,
+                    r.Nombres + ' ' + r.Apellidos   AS Residente,
+                    u.NombreCompleto                AS Especialista,
+                    esp.Nombre                      AS Especialidad,
+                    c.BloqueHorario
+            FROM CitasFundacion c
+            INNER JOIN Remisiones     rem ON rem.Id = c.RemisionId
+            INNER JOIN Residentes       r ON r.Id   = rem.ResidenteId
+            INNER JOIN Usuarios         u ON u.Id   = c.EspecialistaId
+            INNER JOIN Especialidades esp ON esp.Id = rem.EspecialidadId
+            WHERE c.Id = @CitaId;";
+
+        var datos = await conexion.QuerySingleAsync(sql, new { CitaId = citaId }, transaccion);
+
+        var aviso = new AvisoCitaDto
+        {
+            CitaId = citaId,
+            Residente = (string)datos.Residente,
+            Especialista = (string)datos.Especialista,
+            Especialidad = (string)datos.Especialidad,
+            BloqueHorario = (DateTime)datos.BloqueHorario,
+            Destinatarios = await _outbox.ObtenerDestinatariosAsync(
+                conexion, transaccion, (int)datos.ResidenteId)
+        };
+
+        await _outbox.EncolarAsync(conexion, transaccion, TipoEventoOutbox.CitaAsignada, aviso);
     }
 
     /// <summary>

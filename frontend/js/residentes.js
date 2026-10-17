@@ -1,26 +1,40 @@
-// =====================================================================
-// residentes.js  -  Panel clinico: listado y alta de residentes.
-// =====================================================================
-
 let residentes = [];
 
-// null = el formulario esta dando de alta; un Id = esta editando a ese
-// residente. Uso el mismo formulario para las dos cosas porque los
-// campos son identicos: duplicarlo seria mantener dos veces lo mismo.
 let residenteEnEdicion = null;
 
+const puedeAdmitir = sesionActiva?.rol === "Administrador";
+
 const form = document.getElementById("form-residente");
+const panelForm = document.getElementById("panel-form-residente");
+const bloqueAdmision = document.getElementById("bloque-admision");
 const cuerpoTabla = document.getElementById("cuerpo-tabla");
 const paginador = new Paginador("paginador-residentes", () => pintarTabla());
 
-document.addEventListener("DOMContentLoaded", cargar);
+document.addEventListener("DOMContentLoaded", iniciar);
 form.addEventListener("submit", guardar);
 document.getElementById("btn-cancelar-edicion").addEventListener("click", cancelarEdicion);
 document.getElementById("buscar").addEventListener("input", () => {
-    // Cada busqueda empieza en la primera pagina.
     paginador.reiniciar();
     pintarTabla();
 });
+
+async function iniciar() {
+    if (!puedeAdmitir) panelForm.hidden = true;
+    await cargar();
+}
+
+function mostrarBloqueAdmision(visible) {
+    bloqueAdmision.hidden = !visible;
+
+    bloqueAdmision.querySelectorAll("input").forEach(campo => {
+        if (visible) {
+            if (campo.dataset.obligatorio === "si") campo.required = true;
+        } else {
+            if (campo.required) campo.dataset.obligatorio = "si";
+            campo.required = false;
+        }
+    });
+}
 
 async function cargar() {
     cuerpoTabla.innerHTML = `<tr><td colspan="8" class="vacio">Cargando…</td></tr>`;
@@ -64,36 +78,56 @@ function pintarTabla() {
             <td><span class="estado ${r.activo ? "e-completo" : "e-cancelado"}">
                 ${r.activo ? "Activo" : "Inactivo"}
             </span></td>
-            <td class="der">
-                <button class="btn-fila" onclick="editarResidente(${r.id})">Editar</button>
-                <button class="btn-fila" onclick="abrirFamiliares(${r.id})">Familiares</button>
-                <a class="btn-fila" href="crear-remision.html?residente=${r.id}">Remitir</a>
-                <button class="btn-fila peligro" onclick="darDeBaja(${r.id})">Baja</button>
-            </td>
+            <td class="der">${acciones(r)}</td>
         </tr>
     `).join("");
+}
+
+function acciones(r) {
+    const editar = puedeAdmitir
+        ? `<button class="btn-fila" onclick="editarResidente(${r.id})">Editar</button>`
+        : `<button class="btn-fila" onclick="editarResidente(${r.id})">Datos clínicos</button>`;
+
+    const baja = puedeAdmitir
+        ? `<button class="btn-fila peligro" onclick="darDeBaja(${r.id})">Baja</button>`
+        : "";
+
+    return `
+        ${editar}
+        <button class="btn-fila" onclick="abrirFamiliares(${r.id})">Familiares</button>
+        <a class="btn-fila" href="crear-remision.html?residente=${r.id}">Remitir</a>
+        ${baja}
+    `;
 }
 
 async function guardar(evento) {
     evento.preventDefault();
 
-    const datos = {
-        nombres: form.nombres.value.trim(),
-        apellidos: form.apellidos.value.trim(),
-        dpi: form.dpi.value.trim() || null,
-        fechaNacimiento: form.fechaNacimiento.value,
-        cuotaMensual: Number(form.cuotaMensual.value),
-        psicopatologias: form.psicopatologias.value.trim() || null,
-        medicamentosCajon: form.medicamentosCajon.value.trim() || null
-    };
-
     try {
-        if (residenteEnEdicion) {
-            await api.editar("residentes", residenteEnEdicion, datos);
-            mostrarAviso("Datos del residente actualizados.");
+        if (!puedeAdmitir) {
+            await api.enviarPut(`residentes/${residenteEnEdicion}/clinico`, {
+                psicopatologias: form.psicopatologias.value.trim() || null,
+                medicamentosCajon: form.medicamentosCajon.value.trim() || null
+            });
+            mostrarAviso("Datos clínicos actualizados.");
         } else {
-            await api.crear("residentes", datos);
-            mostrarAviso("Residente registrado correctamente.");
+            const datos = {
+                nombres: form.nombres.value.trim(),
+                apellidos: form.apellidos.value.trim(),
+                dpi: form.dpi.value.trim() || null,
+                fechaNacimiento: form.fechaNacimiento.value,
+                cuotaMensual: Number(form.cuotaMensual.value),
+                psicopatologias: form.psicopatologias.value.trim() || null,
+                medicamentosCajon: form.medicamentosCajon.value.trim() || null
+            };
+
+            if (residenteEnEdicion) {
+                await api.editar("residentes", residenteEnEdicion, datos);
+                mostrarAviso("Datos del residente actualizados.");
+            } else {
+                await api.crear("residentes", datos);
+                mostrarAviso("Residente registrado correctamente.");
+            }
         }
 
         cancelarEdicion();
@@ -103,35 +137,50 @@ async function guardar(evento) {
     }
 }
 
-// ---------------- Edicion ----------------
-
 function editarResidente(id) {
     const r = residentes.find(x => x.id === id);
     if (!r) return;
 
     residenteEnEdicion = id;
+    panelForm.hidden = false;
 
-    form.nombres.value           = r.nombres;
-    form.apellidos.value         = r.apellidos;
-    form.dpi.value               = r.dpi ?? "";
-    // El input de fecha espera aaaa-mm-dd y la API devuelve ISO completo.
-    form.fechaNacimiento.value   = fechaInput(r.fechaNacimiento);
-    form.cuotaMensual.value      = r.cuotaMensual;
     form.psicopatologias.value   = r.psicopatologias ?? "";
     form.medicamentosCajon.value = r.medicamentosCajon ?? "";
 
-    document.getElementById("titulo-form").textContent = `Editando a ${r.nombres} ${r.apellidos}`;
-    document.getElementById("btn-guardar").textContent = "Guardar cambios";
+    if (puedeAdmitir) {
+        mostrarBloqueAdmision(true);
+
+        form.nombres.value         = r.nombres;
+        form.apellidos.value       = r.apellidos;
+        form.dpi.value             = r.dpi ?? "";
+        form.fechaNacimiento.value = fechaInput(r.fechaNacimiento);
+        form.cuotaMensual.value    = r.cuotaMensual;
+
+        document.getElementById("titulo-form").textContent = `Editando a ${r.nombres} ${r.apellidos}`;
+        document.getElementById("btn-guardar").textContent = "Guardar cambios";
+    } else {
+        mostrarBloqueAdmision(false);
+
+        document.getElementById("titulo-form").textContent =
+            `Datos clínicos de ${r.nombres} ${r.apellidos}`;
+        document.getElementById("btn-guardar").textContent = "Guardar datos clínicos";
+    }
 
     form.scrollIntoView({ behavior: "smooth", block: "center" });
-    form.nombres.focus();
+    form.psicopatologias.focus();
 }
 
 function cancelarEdicion() {
     residenteEnEdicion = null;
     form.reset();
-    document.getElementById("titulo-form").textContent = "Registrar residente";
-    document.getElementById("btn-guardar").textContent = "Registrar residente";
+
+    if (puedeAdmitir) {
+        mostrarBloqueAdmision(true);
+        document.getElementById("titulo-form").textContent = "Registrar residente";
+        document.getElementById("btn-guardar").textContent = "Registrar residente";
+    } else {
+        panelForm.hidden = true;
+    }
 }
 
 async function darDeBaja(id) {

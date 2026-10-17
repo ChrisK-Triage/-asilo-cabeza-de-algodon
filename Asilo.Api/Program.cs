@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using Asilo.Api.Data;
 using Asilo.Api.Repositories;
 using Asilo.Api.Services;
+using Dapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -108,12 +109,39 @@ builder.Services.AddScoped<IFamiliarRepository, FamiliarRepository>();
 builder.Services.AddScoped<ICatalogoRepository, CatalogoRepository>();
 builder.Services.AddScoped<IFacturaRepository, FacturaRepository>();
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+builder.Services.AddScoped<IOutboxRepository, OutboxRepository>();
+builder.Services.AddScoped<ICajaRepository, CajaRepository>();
+builder.Services.AddScoped<IReporteRepository, ReporteRepository>();
 
-// CORS para que el frontend estatico pueda consumir la API.
+// El canal es lo unico que cambia al pasar a produccion: aqui se
+// sustituye CanalRegistro por uno que mande correo de verdad.
+builder.Services.AddScoped<ICanalNotificacion, CanalRegistro>();
+
+// El despachador del Outbox (RF-08). Corre fuera de las peticiones
+// para que un servidor de correo lento no vuelva lenta la asignacion
+// de una cita.
+builder.Services.AddHostedService<DespachadorNotificaciones>();
+
+// CORS solo para cuando el frontend corre aparte, que en mi maquina es
+// Live Server en otro puerto. Al desplegar, el frontend sale de wwwroot
+// de esta misma aplicacion: mismo origen, y entonces CORS no interviene.
+// Los origenes vienen de configuracion y no van escritos aqui, porque
+// AllowAnyOrigin en un servidor publico deja que cualquier pagina
+// consuma la API desde el navegador de quien sea.
+string[] origenesPermitidos = builder.Configuration
+    .GetSection("Cors:Origenes").Get<string[]>() ?? [];
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("PermitirFrontend", policy =>
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+    {
+        if (origenesPermitidos.Length == 0)
+            policy.WithOrigins("https://localhost");
+        else
+            policy.WithOrigins(origenesPermitidos);
+
+        policy.AllowAnyMethod().AllowAnyHeader();
+    });
 });
 
 var app = builder.Build();
@@ -124,29 +152,100 @@ var app = builder.Build();
 // porque BCrypt no se puede calcular desde un script SQL. Sin esto
 // nadie puede entrar y el panel que asigna contrasenas tambien exige
 // sesion: el sistema no tendria forma de darse de alta a si mismo.
-await SemillaSeguridad.AsignarPasswordsPendientesAsync(
-    app.Services.GetRequiredService<DapperContext>(),
-    app.Configuration,
-    app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("SemillaSeguridad"));
+//
+// Va dentro de un try porque esto corre antes de que la aplicacion
+// empiece a atender, y una excepcion aqui no la deja arrancar. En
+// Azure la base es serverless y se pausa sola: despertarla tarda mas
+// de los 30 segundos que espera la conexion, asi que el primer
+// arranque del dia fallaba y la aplicacion entera moria con un 500.30.
+//
+// No tiene sentido que la aplicacion no levante por una tarea de
+// arranque que es opcional. Si falla, lo anoto y sigo: /api/salud
+// dira que la base no responde, y la semilla se reintenta en el
+// siguiente reinicio.
+try
+{
+    await SemillaSeguridad.AsignarPasswordsPendientesAsync(
+        app.Services.GetRequiredService<DapperContext>(),
+        app.Configuration,
+        app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("SemillaSeguridad"));
+}
+catch (Exception ex)
+{
+    app.Services.GetRequiredService<ILoggerFactory>()
+        .CreateLogger("SemillaSeguridad")
+        .LogError(ex, "No se pudo asignar las contrasenas iniciales. " +
+                      "La aplicacion arranca igual; se reintenta en el proximo reinicio.");
+}
 
 // ------------------- PIPELINE -------------------
 // El orden importa: primero se resuelve quien es, despues que puede hacer.
 
-app.UseSwagger();
-app.UseSwaggerUI(c =>
-{
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "API Asilo v1");
-    c.RoutePrefix = "swagger";
-});
+// Swagger queda tras una bandera de configuracion en lugar de atado al
+// entorno, para poder apagarlo en el servidor sin recompilar. Lo dejo
+// encendido para la demostracion: los endpoints ya exigen token, asi
+// que sin credenciales lo unico que se alcanza es el login. Lo que
+// revela es la forma de la API, no acceso a los datos.
+bool swaggerVisible = app.Configuration.GetValue("Swagger:Publico", false)
+                   || app.Environment.IsDevelopment();
 
-// Desactivado en desarrollo: el perfil por defecto de launchSettings
-// solo levanta HTTP (5177), asi que redirigir a HTTPS rompe los fetch
-// del frontend. Se reactiva al desplegar en Azure, donde el
-// certificado lo administra la plataforma.
-// app.UseHttpsRedirection();
+if (swaggerVisible)
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "API Asilo v1");
+        c.RoutePrefix = "swagger";
+    });
+}
+
+// No pongo UseHttpsRedirection. En App Service el certificado lo
+// termina la plataforma y a la aplicacion le llega HTTP por dentro, de
+// modo que esta linea veria una peticion insegura y redirigiria en
+// ciclo. Lo equivalente alla es la opcion "HTTPS Only" del servicio,
+// que corta la peticion antes de que llegue aqui.
+
+// El frontend sale de wwwroot de esta misma aplicacion. Es un solo
+// servicio en lugar de dos, y al compartir origen desaparece el
+// problema de CORS. UseDefaultFiles va antes que UseStaticFiles porque
+// lo que hace es reescribir "/" al archivo de inicio; si fuera despues,
+// StaticFiles ya habria dejado pasar la peticion sin resolverla.
+var archivosDeInicio = new DefaultFilesOptions();
+archivosDeInicio.DefaultFileNames.Clear();
+archivosDeInicio.DefaultFileNames.Add("login.html");
+app.UseDefaultFiles(archivosDeInicio);
+app.UseStaticFiles();
+
 app.UseCors("PermitirFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// Sonda de diagnostico. Es lo primero que consulto despues de
+// desplegar: separa "la aplicacion no arranco" de "arranco pero no
+// alcanza la base", que desde el navegador se ven igual.
+app.MapGet("/api/salud", async (DapperContext contexto) =>
+{
+    try
+    {
+        using var conexion = contexto.CreateConnection();
+        await conexion.ExecuteScalarAsync<int>("SELECT 1;");
+        return Results.Ok(new { aplicacion = "arriba", baseDatos = "responde" });
+    }
+    catch (Exception ex)
+    {
+        return Results.Json(
+            new
+            {
+                aplicacion = "arriba",
+                baseDatos = "sin respuesta",
+                // El detalle solo cuando Swagger esta visible: fuera de
+                // la demostracion, el texto de una excepcion de SqlClient
+                // nombra el servidor y el usuario de la conexion.
+                detalle = swaggerVisible ? ex.Message : null
+            },
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+});
 
 app.Run();

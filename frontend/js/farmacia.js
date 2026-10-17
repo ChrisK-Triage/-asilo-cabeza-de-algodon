@@ -1,93 +1,59 @@
-// =====================================================================
-// farmacia.js  -  Panel de farmacia (RF-05b).
-//
-// Separado de laboratorio: aunque los dos se cuelgan de una cita, son
-// requerimientos distintos con actores distintos, y tenerlos en la
-// misma pantalla obligaba al tecnico a pasar por encima del modulo
-// que no le toca.
-// =====================================================================
-
 let despachos = [];
-let citasEsperandoMedicamento = [];
+let recetaSeleccionada = null;
 
-const formDespacho = document.getElementById("form-despacho");
-
+const formEntrega = document.getElementById("form-entrega");
 const pagDespachos = new Paginador("paginador-despachos", () => pintarDespachos());
 
 document.addEventListener("DOMContentLoaded", iniciar);
-formDespacho.addEventListener("submit", registrarDespacho);
+formEntrega.addEventListener("submit", confirmarEntrega);
+document.getElementById("btn-cerrar-entrega").addEventListener("click", cerrarEntrega);
+document.getElementById("filtro-despachos").addEventListener("change", () => {
+    pagDespachos.reiniciar();
+    pintarDespachos();
+});
 
 async function iniciar() {
-    await cargarCitas();
     await cargarDespachos();
     prepararVistaPrevia();
 }
 
-// ---------------- Catalogo de citas ----------------
-// Solo las que estan esperando medicamento: con diagnostico, sin
-// liquidar, todavia en "Esperando anexos" y con farmacia marcada por
-// el especialista. La API rechaza las demas con 409.
-async function cargarCitas() {
-    try {
-        const citas = await api.listar("citas");
-
-        citasEsperandoMedicamento = citas.filter(c =>
-            c.diagnostico && !c.liquidada &&
-            c.estado === "Esperando anexos" && c.requiereFarmacia
-        );
-
-        formDespacho.citaId.innerHTML = citasEsperandoMedicamento.length
-            ? `<option value="">Selecciona una cita</option>` +
-              citasEsperandoMedicamento.map(c =>
-                  `<option value="${c.id}">
-                      #${c.id} — ${limpiar(c.residenteNombre)} (${limpiar(c.especialidadSolicitada)})
-                   </option>`
-              ).join("")
-            : `<option value="">No hay citas esperando medicamentos</option>`;
-
-        if (citas.length === 0) {
-            mostrarAviso("Aún no hay citas registradas. La fundación debe asignar una cita primero.", "info");
-        } else if (citasEsperandoMedicamento.length === 0) {
-            mostrarAviso(
-                "Ninguna cita está esperando medicamentos. El especialista debe registrar " +
-                "la consulta e indicar que el residente necesita farmacia.",
-                "info"
-            );
-        }
-    } catch (error) {
-        mostrarAviso(error.message, "error");
-    }
-}
-
-// ---------------- Despachos ----------------
-
 async function cargarDespachos() {
     const cuerpo = document.getElementById("cuerpo-despachos");
-    cuerpo.innerHTML = `<tr><td colspan="5" class="vacio">Cargando…</td></tr>`;
+    cuerpo.innerHTML = `<tr><td colspan="7" class="vacio">Cargando…</td></tr>`;
 
     try {
         despachos = await api.listar("farmacia/despachos");
         pintarDespachos();
     } catch (error) {
-        cuerpo.innerHTML = `<tr><td colspan="5" class="vacio">${limpiar(error.message)}</td></tr>`;
+        cuerpo.innerHTML = `<tr><td colspan="7" class="vacio">${limpiar(error.message)}</td></tr>`;
+        document.getElementById("conteo-despachos").textContent = "";
     }
 }
 
 function pintarDespachos() {
     const cuerpo = document.getElementById("cuerpo-despachos");
-    const total = despachos.reduce((suma, d) => suma + d.costoTotal, 0);
+    const filtro = document.getElementById("filtro-despachos").value;
+    const lista = filtro ? despachos.filter(d => d.estado === filtro) : despachos;
+
+    const entregado = despachos
+        .filter(d => d.estado === "Despachado")
+        .reduce((suma, d) => suma + d.costoTotal, 0);
+
+    const porEntregar = despachos.filter(d => d.estado === "Recetado").length;
 
     document.getElementById("conteo-despachos").textContent =
-        `${despachos.length} despachos · ${moneda(total)} acumulado`;
+        porEntregar > 0
+            ? `${porEntregar} por entregar · ${moneda(entregado)} despachado`
+            : `${moneda(entregado)} despachado`;
 
-    if (despachos.length === 0) {
-        cuerpo.innerHTML = `<tr><td colspan="5" class="vacio">
-            Aun no hay despachos registrados.
+    if (lista.length === 0) {
+        cuerpo.innerHTML = `<tr><td colspan="7" class="vacio">
+            ${filtro ? "Ninguna receta coincide con el filtro." : "Aun no hay recetas registradas."}
         </td></tr>`;
         return;
     }
 
-    cuerpo.innerHTML = pagDespachos.recortar(despachos).map(d => `
+    cuerpo.innerHTML = pagDespachos.recortar(lista).map(d => `
         <tr>
             <td>
                 ${limpiar(d.residenteNombre)}
@@ -98,45 +64,83 @@ function pintarDespachos() {
                 <div class="secundario">${limpiar(d.tiempoAplicacion) || "Sin indicaciones"}</div>
             </td>
             <td class="num">${d.cantidad}</td>
-            <td class="num">${moneda(d.costoUnitario)}</td>
-            <td class="num"><strong>${moneda(d.costoTotal)}</strong></td>
+            <td class="num">${d.estado === "Despachado" ? moneda(d.costoUnitario) : "—"}</td>
+            <td class="num">${d.estado === "Despachado" ? `<strong>${moneda(d.costoTotal)}</strong>` : "—"}</td>
+            <td>
+                <span class="estado ${d.estado === "Despachado" ? "e-completo" : "e-pendiente"}">
+                    ${d.estado === "Despachado" ? "Entregado" : "Por entregar"}
+                </span>
+                ${d.estado === "Recetado" && d.diasPendiente > 3
+                    ? `<div class="antiguedad">Recetado hace ${d.diasPendiente} dias</div>` : ""}
+            </td>
+            <td class="der">
+                ${d.estado === "Recetado"
+                    ? `<button class="btn-fila" onclick="abrirEntrega(${d.id})">Entregar</button>`
+                    : `<span class="secundario">${fecha(d.fechaDespacho)}</span>`}
+            </td>
         </tr>
     `).join("");
 }
 
-async function registrarDespacho(evento) {
-    evento.preventDefault();
+function abrirEntrega(id) {
+    recetaSeleccionada = despachos.find(d => d.id === id);
+    if (!recetaSeleccionada) return;
 
-    const datos = {
-        citaId: Number(formDespacho.citaId.value),
-        medicamento: formDespacho.medicamento.value.trim(),
-        cantidad: Number(formDespacho.cantidad.value),
-        tiempoAplicacion: formDespacho.tiempoAplicacion.value.trim() || null,
-        costoUnitario: Number(formDespacho.costoUnitario.value)
-    };
+    document.getElementById("panel-entrega").hidden = false;
+    document.getElementById("detalle-receta").innerHTML = `
+        <div class="ficha">
+            <div class="dato">
+                <div class="rotulo">Residente</div>
+                <div class="valor">${limpiar(recetaSeleccionada.residenteNombre)}</div>
+            </div>
+            <div class="dato">
+                <div class="rotulo">Medicamento</div>
+                <div class="valor">${limpiar(recetaSeleccionada.medicamento)}</div>
+            </div>
+            <div class="dato">
+                <div class="rotulo">Cantidad</div>
+                <div class="valor">${recetaSeleccionada.cantidad}</div>
+            </div>
+            <div class="dato">
+                <div class="rotulo">Indicación</div>
+                <div class="valor">${limpiar(recetaSeleccionada.tiempoAplicacion) || "Sin indicaciones"}</div>
+            </div>
+        </div>
+    `;
+
+    formEntrega.reset();
+    document.getElementById("vista-total").textContent = moneda(0);
+    document.getElementById("panel-entrega").scrollIntoView({ behavior: "smooth", block: "center" });
+    formEntrega.costoUnitario.focus();
+}
+
+function cerrarEntrega() {
+    document.getElementById("panel-entrega").hidden = true;
+    recetaSeleccionada = null;
+    formEntrega.reset();
+}
+
+async function confirmarEntrega(evento) {
+    evento.preventDefault();
+    if (!recetaSeleccionada) return;
 
     try {
-        await api.crear("farmacia/despachos", datos);
-        mostrarAviso("Despacho registrado.");
-        // Con el despacho hecho la cita pudo cerrar su bitacora.
-        await cargarCitas();
-        formDespacho.reset();
-        document.getElementById("vista-total").textContent = moneda(0);
+        await api.enviarPut(`farmacia/despachos/${recetaSeleccionada.id}/entrega`, {
+            costoUnitario: Number(formEntrega.costoUnitario.value)
+        });
+
+        mostrarAviso("Medicamento entregado y aplicado al expediente.");
+        cerrarEntrega();
         cargarDespachos();
     } catch (error) {
         mostrarAviso(error.message, "error");
     }
 }
 
-// Vista previa del costo total mientras el tecnico escribe. Lo calculo
-// aqui solo para mostrarlo: el valor que se guarda lo genera SQL Server
-// como columna persistida, asi que no pueden desincronizarse.
 function prepararVistaPrevia() {
-    const actualizar = () => {
-        const cant = Number(formDespacho.cantidad.value) || 0;
-        const unit = Number(formDespacho.costoUnitario.value) || 0;
+    formEntrega.costoUnitario.addEventListener("input", () => {
+        const unit = Number(formEntrega.costoUnitario.value) || 0;
+        const cant = recetaSeleccionada?.cantidad ?? 0;
         document.getElementById("vista-total").textContent = moneda(cant * unit);
-    };
-    formDespacho.cantidad.addEventListener("input", actualizar);
-    formDespacho.costoUnitario.addEventListener("input", actualizar);
+    });
 }

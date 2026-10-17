@@ -28,12 +28,16 @@
   <a href="crear-remision.html">Remisiones</a>
   <div class="grupo-nav">Fundación</div>
   <a href="consola-fundacion.html">Asignación de citas</a>
+  <a href="panel-especialista.html">Mis consultas</a>
   <div class="grupo-nav">Exámenes y medicamentos</div>
   <a href="panel-laboratorio.html">Laboratorio</a>
   <a href="panel-farmacia.html">Farmacia</a>
   <div class="grupo-nav">Administración</div>
   <a href="estado-cuenta.html">Estado de cuenta</a>
+  <a href="panel-caja.html">Donaciones y gastos</a>
+  <a href="panel-reportes.html">Reportes</a>
   <a href="admin-usuarios.html">Usuarios</a>
+  <a href="panel-notificaciones.html">Notificaciones</a>
   <div class="grupo-nav">Sesión</div>
   <a href="login.html">Cerrar sesión</a>
 </aside>
@@ -45,7 +49,6 @@
 
   <div class="aviso" id="aviso"></div>
 
-  <!-- Selector del residente y del periodo a liquidar -->
   <div class="panel">
     <div class="panel-cuerpo">
       <h2>Liquidación del periodo</h2>
@@ -82,7 +85,6 @@
     </div>
   </div>
 
-  <!-- Desglose del calculo. Oculto hasta que haya algo que mostrar. -->
   <div class="panel" id="panel-calculo" hidden>
     <div class="panel-titulo">Desglose del periodo <span id="rotulo-periodo"></span></div>
     <div class="panel-cuerpo">
@@ -104,8 +106,6 @@
         descuenta.
       </p>
 
-      <!-- Aviso de factura complementaria. Oculto salvo cuando el
-           periodo ya tiene factura emitida. -->
       <p class="ayuda ayuda-alerta" id="aviso-complementaria" hidden></p>
 
       <div class="acciones">
@@ -114,7 +114,6 @@
     </div>
   </div>
 
-  <!-- Facturas del residente -->
   <div class="titulo-pagina">
     <h2 style="margin:0">Facturas</h2>
     <span class="conteo" id="conteo-facturas"></span>
@@ -134,7 +133,6 @@
     <div class="paginador" id="paginador-facturas"></div>
   </div>
 
-  <!-- Registro de abonos -->
   <div class="panel" id="panel-pago" hidden>
     <div class="panel-titulo">
       Abonos de la factura <span id="pago-factura"></span>
@@ -176,6 +174,7 @@
   </div>
 </main>
 </div>
+<script src="js/sesion.js"></script>
 <script src="js/api.js"></script>
 <script src="js/estado-cuenta.js"></script>
 </body>

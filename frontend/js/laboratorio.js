@@ -1,79 +1,17 @@
-// =====================================================================
-// laboratorio.js  -  Panel de laboratorio (RF-05a).
-//
-// Antes esto vivia junto con farmacia en anexos.js. Los separe porque
-// el analisis ya los trata como requerimientos distintos, con actores
-// y momentos distintos: el tecnico de laboratorio carga resultados, el
-// de farmacia despacha medicamentos.
-// =====================================================================
-
 let ordenes = [];
-let citasEsperandoExamen = [];
 let ordenSeleccionada = null;
 
-const formOrden = document.getElementById("form-orden");
 const formResultado = document.getElementById("form-resultado");
 
 const pagOrdenes = new Paginador("paginador-ordenes", () => pintarOrdenes());
 
-document.addEventListener("DOMContentLoaded", iniciar);
-formOrden.addEventListener("submit", crearOrden);
+document.addEventListener("DOMContentLoaded", cargarOrdenes);
 formResultado.addEventListener("submit", cargarResultado);
 document.getElementById("btn-cerrar-resultado").addEventListener("click", cerrarResultado);
 document.getElementById("filtro-ordenes").addEventListener("change", () => {
     pagOrdenes.reiniciar();
     cargarOrdenes();
 });
-
-async function iniciar() {
-    await cargarCitas();
-    await cargarOrdenes();
-}
-
-// ---------------- Catalogo de citas ----------------
-// Una orden se cuelga de una cita, asi que el select se alimenta de las
-// citas que estan esperando examenes.
-//
-// Tres condiciones:
-//   1. tiene diagnostico, porque el examen lo indica el especialista
-//   2. sigue en "Esperando anexos", o sea la bitacora no ha cerrado
-//   3. el especialista marco laboratorio en particular
-//
-// La API rechaza con 409 las que no cumplen, pero no tiene sentido
-// ofrecer en pantalla algo que se va a rechazar.
-async function cargarCitas() {
-    try {
-        const citas = await api.listar("citas");
-
-        citasEsperandoExamen = citas.filter(c =>
-            c.diagnostico && !c.liquidada &&
-            c.estado === "Esperando anexos" && c.requiereLaboratorio
-        );
-
-        formOrden.citaId.innerHTML = citasEsperandoExamen.length
-            ? `<option value="">Selecciona una cita</option>` +
-              citasEsperandoExamen.map(c =>
-                  `<option value="${c.id}">
-                      #${c.id} — ${limpiar(c.residenteNombre)} (${limpiar(c.especialidadSolicitada)})
-                   </option>`
-              ).join("")
-            : `<option value="">No hay citas esperando exámenes</option>`;
-
-        if (citas.length === 0) {
-            mostrarAviso("Aún no hay citas registradas. La fundación debe asignar una cita primero.", "info");
-        } else if (citasEsperandoExamen.length === 0) {
-            mostrarAviso(
-                "Ninguna cita está esperando exámenes. El especialista debe registrar " +
-                "la consulta e indicar que el residente necesita laboratorio.",
-                "info"
-            );
-        }
-    } catch (error) {
-        mostrarAviso(error.message, "error");
-    }
-}
-
-// ---------------- Ordenes ----------------
 
 async function cargarOrdenes() {
     const cuerpo = document.getElementById("cuerpo-ordenes");
@@ -131,27 +69,6 @@ function pintarOrdenes() {
     `).join("");
 }
 
-async function crearOrden(evento) {
-    evento.preventDefault();
-
-    const datos = {
-        citaId: Number(formOrden.citaId.value),
-        tipoExamen: formOrden.tipoExamen.value.trim()
-    };
-
-    try {
-        await api.crear("laboratorio/ordenes", datos);
-        mostrarAviso("Orden de laboratorio solicitada.");
-        await cargarCitas();
-        formOrden.reset();
-        cargarOrdenes();
-    } catch (error) {
-        mostrarAviso(error.message, "error");
-    }
-}
-
-// ---------------- Carga de resultado ----------------
-
 function abrirResultado(id) {
     ordenSeleccionada = ordenes.find(o => o.id === id);
     if (!ordenSeleccionada) return;
@@ -196,9 +113,7 @@ async function cargarResultado(evento) {
     try {
         await api.enviarPut(`laboratorio/ordenes/${ordenSeleccionada.id}/resultado`, datos);
         mostrarAviso("Resultado cargado y aplicado al expediente.");
-        // Si este era el ultimo examen pendiente, la cita acaba de cerrar
-        // su bitacora y ya no debe aparecer en el select.
-        await cargarCitas();
+
         cerrarResultado();
         cargarOrdenes();
     } catch (error) {

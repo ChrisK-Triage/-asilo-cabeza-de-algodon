@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Caja · Asilo Cabeza de Algodón</title>
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/prototipo.css">
+<link rel="stylesheet" href="css/extra.css">
+<link rel="stylesheet" href="css/marca.css">
+</head>
+<body>
+<header><div class="barra">
+  <a class="marca-logo" href="panel-clinico.html">
+    <img src="img/logo-cabeza-de-algodon-oscuro.svg" alt="Asilo Cabeza de Algodón">
+  </a>
+  <div class="usuario"></div>
+</div></header>
+<div class="cuerpo">
+<aside>
+  <div class="grupo-nav">Módulo clínico</div>
+  <a href="panel-clinico.html">Residentes</a>
+  <a href="crear-remision.html">Remisiones</a>
+  <div class="grupo-nav">Fundación</div>
+  <a href="consola-fundacion.html">Asignación de citas</a>
+  <a href="panel-especialista.html">Mis consultas</a>
+  <div class="grupo-nav">Exámenes y medicamentos</div>
+  <a href="panel-laboratorio.html">Laboratorio</a>
+  <a href="panel-farmacia.html">Farmacia</a>
+  <div class="grupo-nav">Administración</div>
+  <a href="estado-cuenta.html">Estado de cuenta</a>
+  <a href="panel-caja.html">Donaciones y gastos</a>
+  <a href="panel-reportes.html">Reportes</a>
+  <a href="admin-usuarios.html">Usuarios</a>
+  <a href="panel-notificaciones.html">Notificaciones</a>
+  <div class="grupo-nav">Sesión</div>
+  <a href="login.html">Cerrar sesión</a>
+</aside>
+<main>
+  <div class="titulo-pagina">
+    <h1>Donaciones y gastos</h1>
+    <span class="conteo" id="conteo"></span>
+  </div>
+
+  <div class="aviso" id="aviso"></div>
+
+  <div class="rejilla" style="margin-bottom:18px">
+    <div class="tarjeta">
+      <div class="rotulo">Donaciones del período</div>
+      <div class="cifra" id="r-donaciones">—</div>
+    </div>
+    <div class="tarjeta">
+      <div class="rotulo">Gastos del período</div>
+      <div class="cifra" id="r-gastos">—</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-cuerpo" style="padding-bottom:0">
+      <div class="rejilla">
+        <div class="campo">
+          <label for="desde">Desde</label>
+          <input type="date" id="desde">
+        </div>
+        <div class="campo">
+          <label for="hasta">Hasta</label>
+          <input type="date" id="hasta">
+          <span class="ayuda">Deja las dos vacías para ver todo</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-cuerpo">
+      <h2 style="margin-top:0">Registrar donación</h2>
+      <form id="form-donacion">
+        <div class="rejilla">
+          <div class="campo">
+            <label for="nombreDonante">Donante</label>
+            <input id="nombreDonante" name="nombreDonante" maxlength="150" required
+                   placeholder="Fundación Rotaria de Mazatenango">
+          </div>
+          <div class="campo">
+            <label for="tipoDonante">Tipo</label>
+            <select id="tipoDonante" name="tipo" required>
+              <option value="Persona">Persona particular</option>
+              <option value="EmpresaNacional">Empresa nacional</option>
+              <option value="EmpresaInternacional">Empresa internacional</option>
+              <option value="Gobierno">Gobierno</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="montoDonacion">Monto (Q)</label>
+            <input type="number" id="montoDonacion" name="monto" min="0.01" step="0.01" required
+                   placeholder="5000.00">
+          </div>
+          <div class="campo">
+            <label for="fechaDonacion">Fecha</label>
+            <input type="date" id="fechaDonacion" name="fecha" required>
+            <span class="ayuda" id="limite-fechas"></span>
+          </div>
+          <div class="campo">
+            <label for="descripcionDonacion">Descripción</label>
+            <input id="descripcionDonacion" name="descripcion" maxlength="300"
+                   placeholder="Aporte para insumos de enfermería">
+          </div>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="btn-principal">Registrar donación</button>
+        </div>
+      </form>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Donante</th><th>Tipo</th><th>Descripción</th><th>Fecha</th>
+            <th class="num">Monto</th><th></th></tr>
+      </thead>
+      <tbody id="cuerpo-donaciones"></tbody>
+    </table>
+    <div class="paginador" id="paginador-donaciones"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-cuerpo">
+      <h2 style="margin-top:0">Registrar gasto operativo</h2>
+      <form id="form-gasto">
+        <div class="rejilla">
+          <div class="campo">
+            <label for="concepto">Concepto</label>
+            <input id="concepto" name="concepto" maxlength="150" required
+                   placeholder="Energía eléctrica de septiembre">
+          </div>
+          <div class="campo">
+            <label for="categoria">Categoría</label>
+            <select id="categoria" name="categoria" required>
+              <option value="">Cargando…</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="montoGasto">Monto (Q)</label>
+            <input type="number" id="montoGasto" name="monto" min="0.01" step="0.01" required
+                   placeholder="1850.00">
+          </div>
+          <div class="campo">
+            <label for="fechaGasto">Fecha</label>
+            <input type="date" id="fechaGasto" name="fecha" required>
+          </div>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="btn-principal">Registrar gasto</button>
+        </div>
+      </form>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Concepto</th><th>Categoría</th><th>Fecha</th>
+            <th class="num">Monto</th><th></th></tr>
+      </thead>
+      <tbody id="cuerpo-gastos"></tbody>
+    </table>
+    <div class="paginador" id="paginador-gastos"></div>
+  </div>
+</main>
+</div>
+<script src="js/sesion.js"></script>
+<script src="js/api.js"></script>
+<script src="js/caja.js"></script>
+</body>
+</html>

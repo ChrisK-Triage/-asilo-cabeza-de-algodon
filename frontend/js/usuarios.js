@@ -1,20 +1,8 @@
-// =====================================================================
-// usuarios.js  -  Administracion de usuarios del sistema.
-//
-// Esta pantalla no estaba en mis casos de uso: el analisis daba por
-// sentado que los usuarios existian sin decir quien los crea. Hasta
-// ahora se llenaban desde el script de semilla, lo que sirve para
-// probar pero no para entregar.
-// =====================================================================
-
 let usuarios = [];
 let roles = [];
 
-// null = alta; un Id = edicion de ese usuario. Mismo formulario para
-// las dos cosas, igual que en residentes.
 let usuarioEnEdicion = null;
 
-// A quien le estoy restableciendo la contrasena en el panel de abajo.
 let usuarioEnPassword = null;
 
 const form = document.getElementById("form-usuario");
@@ -38,27 +26,17 @@ document.getElementById("filtro-rol").addEventListener("change", () => {
     pintarTabla();
 });
 
-// Este filtro si vuelve a pedir datos a la API: incluir o no a los
-// dados de baja es una consulta distinta, no un filtro en memoria.
 document.getElementById("filtro-estado").addEventListener("change", () => {
     paginador.reiniciar();
     cargarUsuarios();
 });
 
 async function iniciar() {
-    // allSettled y no all: si un catalogo falla quiero que el resto de
-    // la pantalla cargue igual, con el aviso del error visible, en vez
-    // de quedarse en blanco sin explicacion.
+
     await Promise.allSettled([cargarRoles(), cargarEspecialidades()]);
     await cargarUsuarios();
 }
 
-// ---------------- Catalogos del formulario ----------------
-
-// Los roles salen de la API y no escritos en el HTML. Son los mismos
-// cinco que acepta CK_Usuarios_Rol, y el endpoint los deriva de la
-// misma constante que usa el backend para validar: una sola lista para
-// la base, la validacion y el desplegable.
 async function cargarRoles() {
     try {
         roles = await api.listar("usuarios/roles");
@@ -98,13 +76,6 @@ async function cargarEspecialidades() {
     }
 }
 
-// La especialidad solo tiene sentido en el rol Especialista, y el CHECK
-// CK_Usuarios_EspecialidadRol la exige nula en los demas. En vez de
-// dejar que el usuario la llene y recibir un error al guardar, el
-// select se habilita o se bloquea segun el rol elegido.
-//
-// La condicion la decide el campo requiereEspecialidad que manda la
-// API, no una comparacion contra la cadena "Especialista" escrita aqui.
 function ajustarEspecialidad() {
     const rol = roles.find(r => r.valor === form.rol.value);
     const requiere = rol?.requiereEspecialidad === true;
@@ -113,17 +84,12 @@ function ajustarEspecialidad() {
     select.disabled = !requiere;
     select.required = requiere;
 
-    // Al salir del rol de especialista limpio el valor: si lo dejara
-    // puesto, el formulario mostraria una especialidad que no se va a
-    // guardar y la pantalla estaria mintiendo.
     if (!requiere) select.value = "";
 
     document.getElementById("ayuda-especialidad").textContent = requiere
         ? "Obligatoria para este rol"
         : "Se habilita al elegir el rol Especialista";
 }
-
-// ---------------- Listado ----------------
 
 async function cargarUsuarios() {
     cuerpoTabla.innerHTML = `<tr><td colspan="7" class="vacio">Cargando…</td></tr>`;
@@ -179,11 +145,6 @@ function pintarTabla() {
     `).join("");
 }
 
-// Los usuarios de la semilla quedaron con 'PENDIENTE_HASH_BCRYPT' como
-// contrasena, asi que no pueden iniciar sesion. Marcarlo en la tabla
-// es lo que convierte ese detalle en algo que se puede arreglar: sin
-// este distintivo, el login va a fallar el miercoles y no va a quedar
-// claro por que.
 function distintivoAcceso(u) {
     return u.tieneContrasenaDefinida
         ? `<span class="estado e-completo">Definida</span>`
@@ -202,8 +163,6 @@ function accionesFila(u) {
     `;
 }
 
-// ---------------- Alta y edicion ----------------
-
 async function guardar(evento) {
     evento.preventDefault();
 
@@ -211,9 +170,7 @@ async function guardar(evento) {
         nombreCompleto: form.nombreCompleto.value.trim(),
         email: form.email.value.trim(),
         rol: form.rol.value,
-        // El select vacio da "", que no es un entero. Lo convierto a
-        // null para que el modelo lo reciba como ausencia de valor y no
-        // como un cero.
+
         especialidadId: form.especialidadId.value ? Number(form.especialidadId.value) : null
     };
 
@@ -244,15 +201,9 @@ function editarUsuario(id) {
     form.email.value = u.email;
     form.rol.value = u.rol;
 
-    // Primero el rol y despues la especialidad: ajustarEspecialidad
-    // limpia el select cuando el rol no es especialista, asi que
-    // asignar la especialidad antes la perderia.
     ajustarEspecialidad();
     form.especialidadId.value = u.especialidadId ?? "";
 
-    // La contrasena no se edita desde aqui. Oculto el campo y le quito
-    // el required, porque un input oculto pero requerido bloquea el
-    // envio del formulario sin mostrar donde esta el problema.
     document.getElementById("campo-password").hidden = true;
     form.password.required = false;
     form.password.value = "";
@@ -276,8 +227,6 @@ function cancelarEdicion() {
     document.getElementById("titulo-form").textContent = "Registrar usuario";
     document.getElementById("btn-guardar").textContent = "Registrar usuario";
 }
-
-// ---------------- Contrasena ----------------
 
 function abrirPassword(id) {
     const u = usuarios.find(x => x.id === id);
@@ -305,9 +254,6 @@ async function restablecerPassword(evento) {
     const nueva = document.getElementById("password-nueva").value;
     const repetida = document.getElementById("password-repetir").value;
 
-    // La comparacion es del lado del navegador a proposito: la API
-    // recibe una sola contrasena. Mandar las dos la obligaria a validar
-    // algo que es un detalle del formulario, no una regla del sistema.
     if (nueva !== repetida) {
         mostrarAviso("Las dos contraseñas no coinciden.", "error");
         return;
@@ -317,14 +263,12 @@ async function restablecerPassword(evento) {
         await api.enviarPut(`usuarios/${usuarioEnPassword}/password`, { password: nueva });
         mostrarAviso("Contraseña restablecida.");
         cerrarPassword();
-        // Recargo para que la columna de acceso pase a "Definida".
+
         cargarUsuarios();
     } catch (error) {
         mostrarAviso(error.message, "error");
     }
 }
-
-// ---------------- Baja y reactivacion ----------------
 
 async function darDeBaja(id) {
     const u = usuarios.find(x => x.id === id);
@@ -340,9 +284,7 @@ async function darDeBaja(id) {
         mostrarAviso(`${u.nombreCompleto} dado de baja.`);
         cargarUsuarios();
     } catch (error) {
-        // Aqui caen los dos 409 del controlador: ultimo administrador
-        // activo y especialista con citas sin cerrar. El mensaje ya
-        // explica que hacer, asi que lo muestro tal cual.
+
         mostrarAviso(error.message, "error");
     }
 }

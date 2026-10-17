@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mis consultas · Asilo Cabeza de Algodón</title>
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/prototipo.css">
+<link rel="stylesheet" href="css/extra.css">
+<link rel="stylesheet" href="css/marca.css">
+</head>
+<body>
+<header><div class="barra">
+  <a class="marca-logo" href="panel-especialista.html">
+    <img src="img/logo-cabeza-de-algodon-oscuro.svg" alt="Asilo Cabeza de Algodón">
+  </a>
+  <div class="usuario"></div>
+</div></header>
+<div class="cuerpo">
+<aside>
+  <div class="grupo-nav">Módulo clínico</div>
+  <a href="panel-clinico.html">Residentes</a>
+  <a href="crear-remision.html">Remisiones</a>
+  <div class="grupo-nav">Fundación</div>
+  <a href="consola-fundacion.html">Asignación de citas</a>
+  <a href="panel-especialista.html">Mis consultas</a>
+  <div class="grupo-nav">Exámenes y medicamentos</div>
+  <a href="panel-laboratorio.html">Laboratorio</a>
+  <a href="panel-farmacia.html">Farmacia</a>
+  <div class="grupo-nav">Administración</div>
+  <a href="estado-cuenta.html">Estado de cuenta</a>
+  <a href="panel-caja.html">Donaciones y gastos</a>
+  <a href="panel-reportes.html">Reportes</a>
+  <a href="admin-usuarios.html">Usuarios</a>
+  <a href="panel-notificaciones.html">Notificaciones</a>
+  <div class="grupo-nav">Sesión</div>
+  <a href="login.html">Cerrar sesión</a>
+</aside>
+<main>
+  <div class="titulo-pagina">
+    <h1>Mis consultas</h1>
+    <span class="conteo" id="conteo"></span>
+  </div>
+
+  <div class="aviso" id="aviso"></div>
+
+  <div class="panel">
+    <div class="panel-cuerpo" style="padding-bottom:0">
+      <div class="campo" style="max-width:320px">
+        <label for="filtro-estado">Estado de la cita</label>
+        <select id="filtro-estado">
+          <option value="">Todas</option>
+          <option value="Programada" selected>Sin consulta registrada</option>
+          <option value="EsperandoAnexos">Esperando exámenes o medicamento</option>
+          <option value="BitacoraCompletada">Consulta cerrada</option>
+        </select>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Residente</th><th>Motivo de la remisión</th><th>Horario</th>
+          <th>Estado</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="cuerpo-citas"></tbody>
+    </table>
+    <div class="paginador" id="paginador-citas"></div>
+  </div>
+
+  <div class="panel" id="panel-indicaciones" hidden>
+    <div class="panel-titulo">
+      Indicaciones de <span id="indicaciones-residente"></span>
+      <button class="btn-fila" style="float:right" onclick="cerrarIndicaciones()">Cerrar</button>
+    </div>
+    <div class="panel-cuerpo">
+      <div id="bloque-examenes">
+        <h2 style="margin-top:0">Exámenes de laboratorio</h2>
+        <form id="form-examen">
+          <div class="rejilla">
+            <div class="campo">
+              <label for="tipoExamen">Examen solicitado</label>
+              <input id="tipoExamen" name="tipoExamen" maxlength="150" required
+                     placeholder="Hemograma completo">
+              <span class="ayuda">El costo lo registra laboratorio al cargar el resultado</span>
+            </div>
+          </div>
+          <div class="acciones">
+            <button type="submit" class="btn-principal">Solicitar examen</button>
+          </div>
+        </form>
+        <table>
+          <thead>
+            <tr><th>Examen</th><th>Solicitado</th><th>Estado</th></tr>
+          </thead>
+          <tbody id="cuerpo-examenes"></tbody>
+        </table>
+      </div>
+
+      <div id="bloque-recetas" style="margin-top:28px;padding-top:22px;border-top:1px solid var(--linea)">
+        <h2 style="margin-top:0">Medicamentos</h2>
+        <form id="form-receta">
+          <div class="rejilla">
+            <div class="campo">
+              <label for="medicamento">Medicamento</label>
+              <input id="medicamento" name="medicamento" maxlength="150" required
+                     placeholder="Donepezilo 10 mg">
+            </div>
+            <div class="campo">
+              <label for="cantidad">Cantidad</label>
+              <input type="number" id="cantidad" name="cantidad" min="1" max="10000" required
+                     placeholder="30">
+            </div>
+            <div class="campo">
+              <label for="tiempoAplicacion">Cada cuánto se aplica</label>
+              <input id="tiempoAplicacion" name="tiempoAplicacion" maxlength="100"
+                     placeholder="1 tableta cada 24 horas">
+              <span class="ayuda">El precio lo pone farmacia al entregar</span>
+            </div>
+          </div>
+          <div class="acciones">
+            <button type="submit" class="btn-principal">Recetar</button>
+          </div>
+        </form>
+        <table>
+          <thead>
+            <tr><th>Medicamento</th><th class="num">Cantidad</th><th>Indicación</th><th>Estado</th></tr>
+          </thead>
+          <tbody id="cuerpo-recetas"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-diagnostico" hidden>
+    <div class="panel-titulo">Registrar la consulta</div>
+    <div class="panel-cuerpo">
+      <div id="detalle-cita"></div>
+
+      <form id="form-diagnostico" style="margin-top:20px;padding-top:18px;border-top:1px solid var(--linea)">
+        <div class="campo">
+          <label for="diagnostico">Diagnóstico</label>
+          <textarea id="diagnostico" name="diagnostico" required
+            placeholder="Hallazgos de la consulta, impresión diagnóstica e indicaciones."></textarea>
+          <span class="ayuda">Una vez guardado no se puede modificar: el expediente clínico es un registro histórico</span>
+        </div>
+        <div class="campo" style="margin-top:14px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="requiereLaboratorio" name="requiereLaboratorio" style="width:auto">
+            Necesita exámenes de laboratorio
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:8px">
+            <input type="checkbox" id="requiereFarmacia" name="requiereFarmacia" style="width:auto">
+            Necesita medicamentos de farmacia
+          </label>
+          <span class="ayuda">
+            La cita queda abierta esperando solo lo que marques. Si no marcas
+            nada, la consulta se cierra al guardar.
+          </span>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="btn-principal">Guardar consulta</button>
+          <button type="button" class="btn-secundario" id="btn-cerrar-diagnostico">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+</div>
+<script src="js/sesion.js"></script>
+<script src="js/api.js"></script>
+<script src="js/especialista.js"></script>
+</body>
+</html>

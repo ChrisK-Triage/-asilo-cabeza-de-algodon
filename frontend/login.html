@@ -15,9 +15,6 @@
 <link rel="stylesheet" href="css/marca.css">
 </head>
 <body>
-<!-- Barra negra igual a la del resto del sistema: aunque esta pantalla
-     no tenga sesion todavia, quiero que se reconozca como la misma
-     aplicacion y no como una pagina suelta. -->
 <header><div class="barra">
   <span class="marca-logo">
     <img src="img/logo-cabeza-de-algodon-oscuro.svg" alt="Asilo Cabeza de Algodón">
@@ -31,45 +28,26 @@
     <h1>Inicio de sesión</h1>
     <p class="subtitulo">Ingrese con su correo institucional</p>
 
+    <div class="aviso" id="aviso"></div>
+
     <form id="form-login">
       <div class="campo">
-        <label for="correo">Correo institucional</label>
-        <input id="correo" type="email" autocomplete="username"
+        <label for="email">Correo institucional</label>
+        <input id="email" name="email" type="email" autocomplete="username"
                placeholder="medico.general@asilo.org" required>
       </div>
       <div class="campo">
-        <label for="clave">Contraseña</label>
-        <input id="clave" type="password" autocomplete="current-password"
+        <label for="password">Contraseña</label>
+        <input id="password" name="password" type="password" autocomplete="current-password"
                placeholder="••••••••" required>
       </div>
-      <button type="submit" class="btn-principal">Entrar</button>
+      <button type="submit" class="btn-principal" id="btn-entrar">Entrar</button>
     </form>
-
-    <div class="aviso aviso-info" id="aviso-login" style="margin-top:16px">
-      La autenticación con JWT y el control de permisos por rol quedan
-      para la fase de implementación final. Por ahora se entra directo
-      al módulo que corresponde a cada rol.
-    </div>
-
-    <div class="nota-proto">
-      Acceso por rol mientras no hay autenticación:
-      <a href="panel-clinico.html">Médico general — panel clínico</a>
-      <a href="consola-fundacion.html">Fundación — asignación de citas</a>
-      <a href="panel-laboratorio.html">Laboratorio — órdenes de examen</a>
-      <a href="panel-farmacia.html">Farmacia — despacho de medicamentos</a>
-      <a href="estado-cuenta.html">Administrador — estado de cuenta</a>
-    </div>
   </div>
 </div>
 
-<script>
-// Sin backend de autenticacion todavia: dejo el envio del formulario
-// desactivado y mando al panel clinico, que es el rol por omision.
-// Cuando exista el endpoint de login, aqui va el fetch del token.
-document.getElementById("form-login").addEventListener("submit", evento => {
-    evento.preventDefault();
-    window.location.href = "panel-clinico.html";
-});
-</script>
+<script src="js/sesion.js"></script>
+<script src="js/api.js"></script>
+<script src="js/login.js"></script>
 </body>
 </html>

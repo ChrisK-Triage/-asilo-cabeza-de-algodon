@@ -7,6 +7,17 @@ obj/
 *.suo
 *.cache
 
+## Salida del despliegue a Azure
+## publicar/ es lo que genera dotnet publish y el zip es lo que subo a
+## Kudu: los dos se regeneran con un comando, asi que no tiene sentido
+## versionarlos. Asilo.Api/wwwroot es la copia de frontend/ que hace el
+## xcopy antes de publicar; el original ya esta versionado y tener las
+## dos copias en el repositorio solo abre la puerta a editar la
+## equivocada.
+publicar/
+*.zip
+Asilo.Api/wwwroot/
+
 ## Configuracion local con datos sensibles
 appsettings.Development.json
 appsettings.Local.json
