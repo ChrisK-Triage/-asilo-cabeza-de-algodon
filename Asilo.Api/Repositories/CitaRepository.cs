@@ -2,6 +2,7 @@ using System.Data;
 using Asilo.Api.Data;
 using Asilo.Api.DTOs;
 using Asilo.Api.Models;
+using Asilo.Api.Services;
 using Dapper;
 
 namespace Asilo.Api.Repositories;
@@ -10,11 +11,14 @@ public class CitaRepository : ICitaRepository
 {
     private readonly DapperContext _context;
     private readonly IOutboxRepository _outbox;
+    private readonly AvisadorOutbox _avisador;
 
-    public CitaRepository(DapperContext context, IOutboxRepository outbox)
+    public CitaRepository(DapperContext context, IOutboxRepository outbox,
+                          AvisadorOutbox avisador)
     {
         _context = context;
         _outbox = outbox;
+        _avisador = avisador;
     }
 
     // Tres JOIN: la cita necesita datos de la remision, del residente
@@ -103,6 +107,13 @@ public class CitaRepository : ICitaRepository
             await EncolarAvisoDeCitaAsync(conexion, transaccion, idCita);
 
             transaccion.Commit();
+
+            // El timbre va despues del commit, no antes. Si sonara
+            // dentro de la transaccion, el despachador podria despertar
+            // y consultar la tabla cuando la fila todavia no esta
+            // confirmada: no veria nada y se volveria a dormir.
+            _avisador.HayAlgoNuevo();
+
             return idCita;
         }
         catch

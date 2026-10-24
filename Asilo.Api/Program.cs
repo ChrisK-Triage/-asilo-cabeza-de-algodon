@@ -113,9 +113,30 @@ builder.Services.AddScoped<IOutboxRepository, OutboxRepository>();
 builder.Services.AddScoped<ICajaRepository, CajaRepository>();
 builder.Services.AddScoped<IReporteRepository, ReporteRepository>();
 
-// El canal es lo unico que cambia al pasar a produccion: aqui se
-// sustituye CanalRegistro por uno que mande correo de verdad.
-builder.Services.AddScoped<ICanalNotificacion, CanalRegistro>();
+// El canal es lo unico que cambia al pasar a produccion, y cual se usa
+// lo decide la configuracion en lugar de una linea que haya que editar
+// y recompilar: si estan los datos del servidor de correo, se manda
+// correo de verdad; si no, se escribe en el registro.
+//
+// Lo prefiero asi porque el mismo binario sirve para las dos cosas. En
+// mi maquina no quiero mandar correo cada vez que pruebo una cita, y en
+// Azure si; con esto, la diferencia es una variable de entorno y no una
+// version distinta del codigo.
+builder.Services.Configure<OpcionesCorreo>(
+    builder.Configuration.GetSection(OpcionesCorreo.Seccion));
+
+var opcionesCorreo = builder.Configuration
+    .GetSection(OpcionesCorreo.Seccion).Get<OpcionesCorreo>() ?? new OpcionesCorreo();
+
+if (opcionesCorreo.EstaCompleta())
+    builder.Services.AddScoped<ICanalNotificacion, CanalCorreo>();
+else
+    builder.Services.AddScoped<ICanalNotificacion, CanalRegistro>();
+
+// El timbre entre quien encola un aviso y quien lo entrega. Singleton
+// porque el semaforo tiene que ser el mismo para todos: si cada
+// peticion tuviera el suyo, tocaria un timbre que nadie escucha.
+builder.Services.AddSingleton<AvisadorOutbox>();
 
 // El despachador del Outbox (RF-08). Corre fuera de las peticiones
 // para que un servidor de correo lento no vuelva lenta la asignacion
@@ -177,6 +198,17 @@ catch (Exception ex)
         .LogError(ex, "No se pudo asignar las contrasenas iniciales. " +
                       "La aplicacion arranca igual; se reintenta en el proximo reinicio.");
 }
+
+// Dejo constancia de por donde van a salir los avisos. Si manana no
+// llega ningun correo, lo primero que quiero saber es si el canal real
+// quedo activo o si la configuracion estaba incompleta y se cayo al de
+// registro sin decir nada.
+app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Notificaciones")
+   .LogInformation(
+        opcionesCorreo.EstaCompleta()
+            ? "Los avisos salen por correo desde {Remitente} vía {Servidor}:{Puerto}."
+            : "Los avisos se escriben en el registro: falta configurar la seccion Correo.",
+        opcionesCorreo.CorreoRemitente, opcionesCorreo.Servidor, opcionesCorreo.Puerto);
 
 // ------------------- PIPELINE -------------------
 // El orden importa: primero se resuelve quien es, despues que puede hacer.

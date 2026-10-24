@@ -2,6 +2,7 @@ using System.Data;
 using Asilo.Api.Data;
 using Asilo.Api.DTOs;
 using Asilo.Api.Models;
+using Asilo.Api.Services;
 using Dapper;
 using Microsoft.Data.SqlClient;
 
@@ -11,11 +12,14 @@ public class FacturaRepository : IFacturaRepository
 {
     private readonly DapperContext _context;
     private readonly IOutboxRepository _outbox;
+    private readonly AvisadorOutbox _avisador;
 
-    public FacturaRepository(DapperContext context, IOutboxRepository outbox)
+    public FacturaRepository(DapperContext context, IOutboxRepository outbox,
+                             AvisadorOutbox avisador)
     {
         _context = context;
         _outbox = outbox;
+        _avisador = avisador;
     }
 
     // ==================== CALCULO DEL PERIODO ====================
@@ -205,6 +209,11 @@ public class FacturaRepository : IFacturaRepository
             await EncolarAvisoDeFacturaAsync(conexion, transaccion, facturaId, calculo);
 
             transaccion.Commit();
+
+            // Timbre despues del commit: antes, el despachador podria
+            // consultar la tabla con la fila aun sin confirmar.
+            _avisador.HayAlgoNuevo();
+
             return facturaId;
         }
         catch (SqlException ex) when (ex.Number is 2601 or 2627
@@ -360,6 +369,8 @@ public class FacturaRepository : IFacturaRepository
             await EncolarAvisoDePagoAsync(conexion, transaccion, facturaId, monto, metodo);
 
             transaccion.Commit();
+            _avisador.HayAlgoNuevo();
+
             return pagoId;
         }
         catch

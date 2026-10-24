@@ -15,19 +15,30 @@ namespace Asilo.Api.Services;
 /// dentro del mismo proceso, que es lo razonable para el tamano del
 /// sistema; separarlo despues no toca nada mas que este archivo, porque
 /// lo unico que comparte con el resto es la tabla.
+///
+/// No trabaja por reloj sino por aviso. La primera version consultaba la
+/// tabla cada quince segundos todo el dia, y eso tiene un costo que no
+/// se ve en desarrollo: la base serverless de Azure se pausa tras una
+/// hora sin consultas y cobra por el tiempo que esta despierta, de modo
+/// que preguntar seguido le impedia dormirse y agoto la cuota mensual en
+/// tres dias. Ahora espera a que le toquen el timbre, y solo recurre al
+/// reloj como respaldo.
 /// </summary>
 public class DespachadorNotificaciones : BackgroundService
 {
     private readonly IServiceScopeFactory _ambitos;
+    private readonly AvisadorOutbox _avisador;
     private readonly IConfiguration _config;
     private readonly ILogger<DespachadorNotificaciones> _log;
 
     public DespachadorNotificaciones(
         IServiceScopeFactory ambitos,
+        AvisadorOutbox avisador,
         IConfiguration config,
         ILogger<DespachadorNotificaciones> log)
     {
         _ambitos = ambitos;
+        _avisador = avisador;
         _config = config;
         _log = log;
     }
@@ -40,17 +51,46 @@ public class DespachadorNotificaciones : BackgroundService
             return;
         }
 
-        var espera = TimeSpan.FromSeconds(OpcionesNotificaciones.SegundosEntreVueltas(_config));
+        var plazoRespaldo = TimeSpan.FromMinutes(
+            OpcionesNotificaciones.MinutosDeRespaldo(_config));
+
+        var plazoReintento = TimeSpan.FromSeconds(
+            OpcionesNotificaciones.SegundosEntreReintentos(_config));
 
         _log.LogInformation(
-            "Despachador de notificaciones en marcha. Revisa la bandeja cada {Segundos} s.",
-            espera.TotalSeconds);
+            "Despachador de notificaciones en marcha. Trabaja cuando se encola un aviso; "
+          + "ademas barre la bandeja cada {Minutos} min por si quedo algo.",
+            plazoRespaldo.TotalMinutes);
+
+        // Un barrido al arrancar: si el proceso se reinicio con avisos
+        // encolados, nadie va a tocar el timbre por ellos.
+        bool hayTrabajo = true;
 
         while (!cancelacion.IsCancellationRequested)
         {
+            if (!hayTrabajo)
+            {
+                // La bandeja quedo limpia. Descarto los timbrazos que se
+                // acumularon mientras trabajaba —ya revise lo que
+                // anunciaban— y me duermo hasta que entre algo nuevo.
+                // Mientras tanto nadie consulta la base y puede pausarse.
+                _avisador.Vaciar();
+
+                try
+                {
+                    await _avisador.EsperarAsync(plazoRespaldo, cancelacion);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
+
+            int tomados;
+
             try
             {
-                await DarUnaVueltaAsync(cancelacion);
+                tomados = await DarUnaVueltaAsync(cancelacion);
             }
             catch (Exception ex)
             {
@@ -59,11 +99,33 @@ public class DespachadorNotificaciones : BackgroundService
                 // deja de haber quien entregue avisos y nadie se entera
                 // hasta que un familiar reclama.
                 _log.LogError(ex, "Fallo una vuelta del despachador. Reintento en la siguiente.");
+
+                tomados = -1;
             }
+
+            if (tomados == 0)
+            {
+                // Nada pendiente: a dormir hasta el proximo timbre.
+                hayTrabajo = false;
+                continue;
+            }
+
+            if (tomados == OpcionesNotificaciones.MaximoPorVuelta(_config))
+            {
+                // Tome el maximo, asi que es probable que queden mas.
+                // Sigo de largo sin esperar.
+                hayTrabajo = true;
+                continue;
+            }
+
+            // Quedaron avisos que fallaron y hay que reintentar, o la
+            // vuelta entera trono. Espero un poco antes de volver, pero
+            // sin dormirme del todo: estos no los va a anunciar nadie.
+            hayTrabajo = true;
 
             try
             {
-                await Task.Delay(espera, cancelacion);
+                await Task.Delay(plazoReintento, cancelacion);
             }
             catch (TaskCanceledException)
             {
@@ -74,7 +136,11 @@ public class DespachadorNotificaciones : BackgroundService
         _log.LogInformation("Despachador de notificaciones detenido.");
     }
 
-    private async Task DarUnaVueltaAsync(CancellationToken cancelacion)
+    /// <summary>
+    /// Devuelve cuantos avisos tomo, que es como el bucle sabe si vale
+    /// la pena volver enseguida o puede irse a dormir.
+    /// </summary>
+    private async Task<int> DarUnaVueltaAsync(CancellationToken cancelacion)
     {
         // Un ambito nuevo por vuelta: los repositorios son Scoped y este
         // servicio es Singleton, asi que no puede guardarse uno fijo.
@@ -87,7 +153,7 @@ public class DespachadorNotificaciones : BackgroundService
         int maximo = OpcionesNotificaciones.MaximoPorVuelta(_config);
 
         var pendientes = (await outbox.TomarPendientesAsync(maximo, tope)).ToList();
-        if (pendientes.Count == 0) return;
+        if (pendientes.Count == 0) return 0;
 
         foreach (var mensaje in pendientes)
         {
@@ -120,5 +186,7 @@ public class DespachadorNotificaciones : BackgroundService
                 }
             }
         }
+
+        return pendientes.Count;
     }
 }
