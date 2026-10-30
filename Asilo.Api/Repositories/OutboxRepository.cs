@@ -39,10 +39,21 @@ public class OutboxRepository : IOutboxRepository
     public async Task<List<DestinatarioAviso>> ObtenerDestinatariosAsync(
         IDbConnection conexion, IDbTransaction transaccion, int residenteId)
     {
+        // Solo los que tienen correo. El aviso sale por correo, asi que
+        // un familiar sin direccion no es destinatario de este canal
+        // aunque si lo sea del residente.
+        //
+        // Sin este filtro, un familiar registrado solo con telefono
+        // entraba a la lista con el correo en nulo: el canal veia un
+        // destinatario, no daba el aviso de "no hay a quien escribirle"
+        // y reventaba despues al armar la direccion, con un error que
+        // no dice cual es el problema real.
         const string sql = @"
             SELECT Nombre, Email, Telefono
             FROM Familiares
             WHERE ResidenteId = @ResidenteId
+              AND Email IS NOT NULL
+              AND LTRIM(RTRIM(Email)) <> ''
             ORDER BY Id;";
 
         var filas = await conexion.QueryAsync<DestinatarioAviso>(

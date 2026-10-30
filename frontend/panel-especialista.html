@@ -87,8 +87,7 @@
               <label for="tipoExamen">Examen solicitado</label>
               <input id="tipoExamen" name="tipoExamen" maxlength="150" required
                      placeholder="Hemograma completo">
-              <span class="ayuda">El costo lo registra laboratorio al cargar el resultado</span>
-            </div>
+              </div>
           </div>
           <div class="acciones">
             <button type="submit" class="btn-principal">Solicitar examen</button>
@@ -120,8 +119,7 @@
               <label for="tiempoAplicacion">Cada cuánto se aplica</label>
               <input id="tiempoAplicacion" name="tiempoAplicacion" maxlength="100"
                      placeholder="1 tableta cada 24 horas">
-              <span class="ayuda">El precio lo pone farmacia al entregar</span>
-            </div>
+              </div>
           </div>
           <div class="acciones">
             <button type="submit" class="btn-principal">Recetar</button>
@@ -147,7 +145,7 @@
           <label for="diagnostico">Diagnóstico</label>
           <textarea id="diagnostico" name="diagnostico" required
             placeholder="Hallazgos de la consulta, impresión diagnóstica e indicaciones."></textarea>
-          <span class="ayuda">Una vez guardado no se puede modificar: el expediente clínico es un registro histórico</span>
+          <span class="ayuda">Una vez guardado no se puede modificar</span>
         </div>
         <div class="campo" style="margin-top:14px">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
@@ -158,10 +156,7 @@
             <input type="checkbox" id="requiereFarmacia" name="requiereFarmacia" style="width:auto">
             Necesita medicamentos de farmacia
           </label>
-          <span class="ayuda">
-            La cita queda abierta esperando solo lo que marques. Si no marcas
-            nada, la consulta se cierra al guardar.
-          </span>
+          <span class="ayuda">Si no marcas ninguna, la consulta se cierra al guardar</span>
         </div>
         <div class="acciones">
           <button type="submit" class="btn-principal">Guardar consulta</button>

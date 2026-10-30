@@ -121,13 +121,22 @@ public class DespachadorNotificaciones : BackgroundService
             // Quedaron avisos que fallaron y hay que reintentar, o la
             // vuelta entera trono. Espero un poco antes de volver, pero
             // sin dormirme del todo: estos no los va a anunciar nadie.
+            //
+            // La espera es sobre el timbre y no un Task.Delay, aunque lo
+            // que toca es esperar por reloj. Con Delay, el despachador
+            // quedaba sordo durante esos minutos: un aviso que no se
+            // puede entregar —un residente sin contacto, por ejemplo—
+            // vive en la bandeja hasta agotar los intentos, asi que esta
+            // rama es la normal, no la excepcional, y cualquier aviso
+            // nuevo esperaba el plazo completo aunque su timbre hubiera
+            // sonado al instante.
             hayTrabajo = true;
 
             try
             {
-                await Task.Delay(plazoReintento, cancelacion);
+                await _avisador.EsperarAsync(plazoReintento, cancelacion);
             }
-            catch (TaskCanceledException)
+            catch (OperationCanceledException)
             {
                 break;
             }

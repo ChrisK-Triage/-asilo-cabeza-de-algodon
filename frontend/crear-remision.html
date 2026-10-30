@@ -57,24 +57,23 @@
           <div class="campo">
             <label for="residenteId">Residente</label>
             <select id="residenteId" name="residenteId" required></select>
-            <span class="ayuda">Catálogo alimentado desde la base de datos</span>
           </div>
           <div class="campo">
             <label for="especialidadId">Especialidad requerida</label>
             <select id="especialidadId" name="especialidadId" required></select>
-            <span class="ayuda" id="aviso-cobertura">Catálogo de especialidades</span>
+            <span class="ayuda" id="aviso-cobertura"></span>
           </div>
           <div class="campo">
             <label for="enfermeroId">Enfermero responsable del traslado</label>
             <select id="enfermeroId" name="enfermeroId"></select>
-            <span class="ayuda">Opcional, del catálogo de enfermeros</span>
+            <span class="ayuda">Opcional</span>
           </div>
         </div>
         <div class="campo" style="margin-top:14px">
           <label for="sintomatologia">Sintomatología observada</label>
           <textarea id="sintomatologia" name="sintomatologia" required
             placeholder="Desorientación nocturna progresiva durante las últimas tres semanas."></textarea>
-          <span class="ayuda">Esta descripción la leerá el especialista antes de la consulta</span>
+          <span class="ayuda">La leerá el especialista antes de la consulta</span>
         </div>
         <div class="acciones">
           <button type="submit" class="btn-principal">Emitir solicitud</button>

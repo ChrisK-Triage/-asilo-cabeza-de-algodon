@@ -41,6 +41,13 @@ public class CanalCorreo : ICanalNotificacion
     {
         var armado = Armar(mensaje);
 
+        // Vuelvo a descartar a los que no traen correo, aunque la
+        // consulta ya los filtre. El payload es una fotografia que pudo
+        // guardarse con una version anterior de esa consulta, y un
+        // destinatario sin direccion revienta al armar el mensaje con un
+        // error que no explica nada.
+        armado.Destinatarios.RemoveAll(d => string.IsNullOrWhiteSpace(d.Email));
+
         // Mismo criterio que tenia CanalRegistro: sin destinatario no hay
         // entrega, y marcarlo como entregado seria mentir. Lo dejo fallar
         // para que quede en la bandeja con su motivo. Esto lo arregla

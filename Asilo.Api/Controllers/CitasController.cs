@@ -82,14 +82,23 @@ public class CitasController : ControllerBase
     /// <summary>Obtiene una cita por su Id.</summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CitaDto>> GetById(int id)
     {
         var cita = await _repo.ObtenerPorIdAsync(id);
 
-        return cita is null
-            ? NotFound(new { mensaje = $"No existe una cita con Id {id}." })
-            : Ok(SegunElRol(cita));
+        if (cita is null)
+            return NotFound(new { mensaje = $"No existe una cita con Id {id}." });
+
+        if (User.IsInRole(RolesUsuario.Especialista)
+                && !User.IsInRole(RolesUsuario.Administrador)
+                && cita.EspecialistaId != UsuarioDelToken())
+        {
+                return Forbid();
+        }
+        
+        return Ok(SegunElRol(cita));
     }
 
     /// <summary>Catalogo de especialistas para alimentar el select de la consola.</summary>
@@ -176,6 +185,7 @@ public class CitasController : ControllerBase
     [HttpPut("{id:int}/diagnostico")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> PutDiagnostico(int id, DiagnosticoDto dto)
@@ -185,6 +195,13 @@ public class CitasController : ControllerBase
         var cita = await _repo.ObtenerPorIdAsync(id);
         if (cita is null)
             return NotFound(new { mensaje = $"No existe una cita con Id {id}." });
+
+        if (User.IsInRole(RolesUsuario.Especialista)
+            && !User.IsInRole(RolesUsuario.Administrador)
+            && cita.EspecialistaId != UsuarioDelToken())
+        {
+            return Forbid();
+        }
 
         // Un diagnostico ya asentado no se sobrescribe: el expediente
         // clinico es un registro historico, no un borrador.

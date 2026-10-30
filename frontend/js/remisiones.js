@@ -71,7 +71,7 @@ function revisarCobertura() {
     const elegida = especialidades.find(e => e.id === Number(form.especialidadId.value));
 
     if (!elegida) {
-        nota.textContent = "Catálogo de especialidades";
+        nota.textContent = "";
         nota.classList.remove("ayuda-alerta");
         return;
     }
