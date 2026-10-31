@@ -21,4 +21,11 @@ public interface IResidenteRepository
 
     Task<bool> DesactivarAsync(int id);
     Task<bool> ExisteAsync(int id);
+
+    /// <summary>
+    /// Si el DPI ya pertenece a otro residente. excluirId deja fuera al
+    /// que se esta editando; sin eso, guardar un expediente sin tocarle
+    /// el documento chocaria contra si mismo.
+    /// </summary>
+    Task<bool> DpiRepetidoAsync(string dpi, int? excluirId = null);
 }

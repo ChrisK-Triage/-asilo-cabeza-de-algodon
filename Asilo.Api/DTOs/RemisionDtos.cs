@@ -9,9 +9,14 @@ public class RemisionCreateDto
     [Range(1, int.MaxValue, ErrorMessage = "El ResidenteId debe ser mayor a cero.")]
     public int ResidenteId { get; set; }
 
-    [Required(ErrorMessage = "Debe indicar el medico que remite.")]
+    /// <summary>
+    /// Solo lo ocupa el administrador, que captura la remision a nombre
+    /// de un medico. Cuando quien firma la peticion es el medico
+    /// general, la autoria sale del token y lo que venga aqui se
+    /// ignora: nadie emite una remision a nombre de otro.
+    /// </summary>
     [Range(1, int.MaxValue, ErrorMessage = "El MedicoGeneralId debe ser mayor a cero.")]
-    public int MedicoGeneralId { get; set; }
+    public int? MedicoGeneralId { get; set; }
 
     [Required(ErrorMessage = "La sintomatologia es obligatoria.")]
     public string Sintomatologia { get; set; } = string.Empty;

@@ -1,6 +1,8 @@
 let remisiones = [];
 let especialidades = [];
 
+const remiteOtro = sesionActiva?.rol === "Administrador";
+
 const form = document.getElementById("form-remision");
 const cuerpoTabla = document.getElementById("cuerpo-tabla");
 const paginador = new Paginador("paginador-remisiones", () => pintarTabla());
@@ -16,8 +18,39 @@ document.getElementById("filtro-estado").addEventListener("change", () => {
 
 async function iniciar() {
 
-    await Promise.allSettled([cargarResidentes(), cargarEspecialidades(), cargarEnfermeros()]);
+    await Promise.allSettled([
+        cargarResidentes(), cargarEspecialidades(), cargarEnfermeros(), cargarMedicos()
+    ]);
     await cargarRemisiones();
+}
+
+async function cargarMedicos() {
+    if (!remiteOtro) return;
+
+    const select = form.medicoGeneralId;
+
+    try {
+        const usuarios = await api.listar("usuarios");
+        const medicos = usuarios.filter(u => u.rol === "MedicoGeneral" && u.activo);
+
+        if (medicos.length === 0) {
+            select.innerHTML = `<option value="">No hay médicos generales activos</option>`;
+            select.disabled = true;
+        } else {
+            select.innerHTML =
+                `<option value="">Selecciona un médico</option>` +
+                medicos.map(m =>
+                    `<option value="${m.id}">${limpiar(m.nombreCompleto)}</option>`
+                ).join("");
+            select.disabled = false;
+            select.required = true;
+        }
+
+        document.getElementById("campo-medico").style.display = "";
+
+    } catch (error) {
+        mostrarAviso(error.message, "error");
+    }
 }
 
 async function cargarResidentes() {
@@ -176,13 +209,12 @@ async function guardar(evento) {
 
     const datos = {
         residenteId: Number(form.residenteId.value),
-
-        medicoGeneralId: 2,
         sintomatologia: form.sintomatologia.value.trim(),
         especialidadId: Number(form.especialidadId.value),
-
         enfermeroId: form.enfermeroId.value ? Number(form.enfermeroId.value) : null
     };
+
+    if (remiteOtro) datos.medicoGeneralId = Number(form.medicoGeneralId.value);
 
     try {
         await api.crear("remisiones", datos);

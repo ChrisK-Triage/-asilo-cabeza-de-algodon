@@ -78,11 +78,24 @@ public class ResidentesController : ControllerBase
         if (dto.FechaNacimiento >= DateTime.Today)
             return BadRequest(new { mensaje = "La fecha de nacimiento debe ser anterior a hoy." });
 
+        // El DPI es unico por indice en la base. Lo compruebo antes de
+        // insertar porque la violacion del indice sale como excepcion de
+        // SQL Server y llega al usuario como un 500 sin explicacion;
+        // registrar a alguien que ya estaba es un caso de todos los dias,
+        // no una rareza que pueda tratarse como error del servidor.
+        string? dpi = string.IsNullOrWhiteSpace(dto.Dpi) ? null : dto.Dpi.Trim();
+
+        if (dpi is not null && await _repo.DpiRepetidoAsync(dpi))
+            return BadRequest(new
+            {
+                mensaje = $"Ya hay un residente registrado con el DPI {dpi}."
+            });
+
         var residente = new Residente
         {
             Nombres = dto.Nombres.Trim(),
             Apellidos = dto.Apellidos.Trim(),
-            Dpi = string.IsNullOrWhiteSpace(dto.Dpi) ? null : dto.Dpi.Trim(),
+            Dpi = dpi,
             FechaNacimiento = dto.FechaNacimiento,
             CuotaMensual = dto.CuotaMensual,
             Psicopatologias = dto.Psicopatologias,
@@ -109,12 +122,23 @@ public class ResidentesController : ControllerBase
         if (!await _repo.ExisteAsync(id))
             return NotFound(new { mensaje = $"No existe un residente con Id {id}." });
 
+        // Misma comprobacion que en el alta, excluyendo al residente que
+        // se esta editando: guardar su expediente sin tocarle el
+        // documento no puede chocar consigo mismo.
+        string? dpi = string.IsNullOrWhiteSpace(dto.Dpi) ? null : dto.Dpi.Trim();
+
+        if (dpi is not null && await _repo.DpiRepetidoAsync(dpi, id))
+            return BadRequest(new
+            {
+                mensaje = $"Ya hay otro residente registrado con el DPI {dpi}."
+            });
+
         var residente = new Residente
         {
             Id = id,
             Nombres = dto.Nombres.Trim(),
             Apellidos = dto.Apellidos.Trim(),
-            Dpi = string.IsNullOrWhiteSpace(dto.Dpi) ? null : dto.Dpi.Trim(),
+            Dpi = dpi,
             FechaNacimiento = dto.FechaNacimiento,
             CuotaMensual = dto.CuotaMensual,
             Psicopatologias = dto.Psicopatologias,

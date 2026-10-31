@@ -14,17 +14,26 @@ public class RemisionesController : ControllerBase
 {
     private readonly IRemisionRepository _repo;
     private readonly IResidenteRepository _repoResidente;
+    private readonly IUsuarioRepository _repoUsuario;
     private readonly ICatalogoRepository _catalogo;
 
     public RemisionesController(
         IRemisionRepository repo,
         IResidenteRepository repoResidente,
+        IUsuarioRepository repoUsuario,
         ICatalogoRepository catalogo)
     {
         _repo = repo;
         _repoResidente = repoResidente;
+        _repoUsuario = repoUsuario;
         _catalogo = catalogo;
     }
+
+    /// <summary>Id del usuario que firma la peticion, tomado del token.</summary>
+    private int UsuarioDelToken()
+        => int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out int id)
+            ? id
+            : 0;
 
     /// <summary>Lista las remisiones. Filtros opcionales por estado y por residente.</summary>
     [HttpGet]
@@ -56,6 +65,40 @@ public class RemisionesController : ControllerBase
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
+        // La autoria la pone el servidor, no la peticion. Venia del
+        // cuerpo, y eso permitia emitir una remision a nombre de otro
+        // medico con solo cambiar un numero. El dato tampoco es un dato
+        // que el usuario este eligiendo: es quien firma.
+        int medicoGeneralId;
+
+        if (User.IsInRole(RolesUsuario.MedicoGeneral))
+        {
+            medicoGeneralId = UsuarioDelToken();
+        }
+        else
+        {
+            // Solo queda el administrador, que no es medico y por lo
+            // tanto no puede figurar como quien remite. Si captura una
+            // remision tiene que decir a nombre de quien, y ese alguien
+            // tiene que ser un medico general activo: la llave foranea
+            // apunta a Usuarios y aceptaria a cualquiera.
+            if (!dto.MedicoGeneralId.HasValue)
+                return BadRequest(new
+                {
+                    mensaje = "Debe indicar el medico general que emite la remision."
+                });
+
+            var medico = await _repoUsuario.ObtenerPorIdAsync(dto.MedicoGeneralId.Value);
+
+            if (medico is null || !medico.Activo || medico.Rol != RolesUsuario.MedicoGeneral)
+                return BadRequest(new
+                {
+                    mensaje = $"El usuario con Id {dto.MedicoGeneralId} no es un medico general activo."
+                });
+
+            medicoGeneralId = medico.Id;
+        }
+
         // Valido la llave foranea antes de insertar. Si dejo que falle la
         // restriccion de SQL Server, el usuario recibe un 500 ilegible en
         // lugar de un mensaje que le diga que corregir.
@@ -79,7 +122,7 @@ public class RemisionesController : ControllerBase
         var remision = new Remision
         {
             ResidenteId = dto.ResidenteId,
-            MedicoGeneralId = dto.MedicoGeneralId,
+            MedicoGeneralId = medicoGeneralId,
             Sintomatologia = dto.Sintomatologia.Trim(),
             EspecialidadId = dto.EspecialidadId,
             EnfermeroId = dto.EnfermeroId,

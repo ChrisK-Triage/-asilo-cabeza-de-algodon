@@ -138,4 +138,22 @@ public class ResidenteRepository : IResidenteRepository
         using var conexion = _context.CreateConnection();
         return await conexion.ExecuteScalarAsync<int>(sql, new { Id = id }) > 0;
     }
+
+    public async Task<bool> DpiRepetidoAsync(string dpi, int? excluirId = null)
+    {
+        // Cuenta tambien a los inactivos, igual que el indice
+        // UX_Residentes_Dpi, que solo filtra los nulos. Si mirara nada
+        // mas a los activos, el DPI de un residente dado de baja se
+        // veria libre y el INSERT reventaria contra el indice de todos
+        // modos, que es justo lo que esta consulta evita.
+        const string sql = @"
+            SELECT COUNT(1)
+            FROM Residentes
+            WHERE Dpi = @Dpi
+              AND (@ExcluirId IS NULL OR Id <> @ExcluirId);";
+
+        using var conexion = _context.CreateConnection();
+        return await conexion.ExecuteScalarAsync<int>(
+            sql, new { Dpi = dpi, ExcluirId = excluirId }) > 0;
+    }
 }
